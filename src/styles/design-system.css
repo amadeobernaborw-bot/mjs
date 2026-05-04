@@ -1,0 +1,93 @@
+:root {
+  /* MJ Brand — iPhone 17 Pro palette (Orange · Midnight · Titanium) */
+  --brand-violet:      #E8782A;
+  --brand-violet-soft: #F4A874;
+  --brand-pink:        #2A3B5C;
+  --brand-pink-soft:   #B0B0B4;
+  --brand-grad:        linear-gradient(135deg, #E8782A 0%, #D46820 100%);
+  --brand-grad-soft:   linear-gradient(135deg, rgba(232,120,42,0.18), rgba(42,59,92,0.10));
+
+  /* Backgrounds */
+  --bg-primary:     #FFFFFF;
+  --bg-secondary:   #F5F5F7;
+  --bg-tertiary:    #FAFAFA;
+  --bg-dark:        #0B0B10;
+  --bg-dark-card:   #16161D;
+  --bg-dark-card-2: #1F1F29;
+
+  --text-primary:   #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-tertiary:  #86868B;
+  --text-on-dark:   #F5F5F7;
+  --text-muted-dark: #A1A1A6;
+
+  --accent-blue:       #E8782A;
+  --accent-blue-hover: #D46820;
+  --accent-green:      #2FD058;
+  --accent-red:        #FF3B30;
+  --accent-yellow:     #FFCC00;
+
+  /* iPhone 17 Pro Palette */
+  --accent-orange:        #E8782A;
+  --accent-orange-hover:  #D46820;
+  --accent-orange-light:  rgba(232, 120, 42, 0.12);
+  --bg-midnight:          #2A3B5C;
+  --bg-midnight-card:     #1E2D4A;
+  --bg-midnight-hover:    #324568;
+  --titanium:             #B0B0B4;
+  --titanium-light:       #D8D8DC;
+
+  --border-light:  rgba(0, 0, 0, 0.08);
+  --border-medium: rgba(0, 0, 0, 0.14);
+  --border-dark:   rgba(255, 255, 255, 0.12);
+
+  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-hover:  0 14px 40px rgba(0, 0, 0, 0.12);
+  --shadow-modal:  0 20px 60px rgba(0, 0, 0, 0.25);
+  --shadow-inset:  inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-brand:  0 18px 50px rgba(232, 120, 42, 0.30);
+
+  --text-hero:        clamp(48px, 7vw, 80px);
+  --text-section:     clamp(36px, 5vw, 56px);
+  --text-subsection:  clamp(24px, 3vw, 34px);
+  --text-eyebrow:     14px;
+  --text-body-lg:     19px;
+  --text-body:        17px;
+  --text-body-sm:     15px;
+  --text-caption:     13px;
+
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --space-9: 96px; --space-10: 128px;
+
+  --radius-sm:   8px;
+  --radius-md:   14px;
+  --radius-lg:   20px;
+  --radius-xl:   28px;
+  --radius-pill: 980px;
+
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast:   150ms;
+  --duration-base:   320ms;
+  --duration-slow:   600ms;
+
+  --container-max: 1240px;
+  --nav-height: 56px;
+}
+
+.container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
+.section { padding-block: clamp(72px, 10vw, 128px); }
+.section--tight { padding-block: clamp(48px, 7vw, 80px); }
+.section--dark { background: var(--bg-dark); color: var(--text-on-dark); }
+.section--gray { background: var(--bg-secondary); }
+
+.eyebrow { font-size: var(--text-eyebrow); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-orange); }
+.headline { font-size: var(--text-hero); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; }
+.title { font-size: var(--text-section); font-weight: 700; letter-spacing: -0.035em; line-height: 1.07; }
+.subtitle { font-size: var(--text-subsection); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.body-lg { font-size: var(--text-body-lg); color: var(--text-secondary); line-height: 1.5; }
+.body { font-size: var(--text-body); color: var(--text-secondary); line-height: 1.5; }
+.center { text-align: center; }
+.muted { color: var(--text-secondary); }
+.muted-light { color: var(--text-muted-dark); }
