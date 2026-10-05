@@ -1,0 +1,66 @@
+/* ==========================================================================
+   shadcn/ui (preset bIkezuS — estilo vega, iconos lucide, radio large)
+   Solo se toman componentes, radios e iconos del preset: los colores salen de
+   los tokens semánticos de design-system.css (temas Oscuro Bordó / Claro Acero).
+   Sin preflight de Tailwind: el reset propio (reset.css) va en @layer base.
+   Si quedara sin capa, su `* { padding: 0 }` y `button { background: none }`
+   ganarían a cualquier utilidad, porque las reglas sin capa siempre ganan.
+   ========================================================================== */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "./reset.css" layer(base);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: var(--font-sans);
+
+  --color-background: var(--surface-page);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--surface-card);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--surface-page);
+  --color-secondary: var(--surface-subtle);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-subtle);
+  --color-muted-foreground: var(--text-secondary);
+  --color-subtle-foreground: var(--text-tertiary);
+  --color-accent: var(--accent-tint);
+  --color-accent-foreground: var(--text-primary);
+  --color-brand: var(--accent);
+  --color-destructive: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border-light);
+  --color-border-strong: var(--border-medium);
+  --color-input: var(--border-input);
+  --color-ring: var(--focus-ring);
+  --color-cta-foreground: var(--cta-text);
+  --color-cta-border: var(--cta-border);
+  --color-cta-ring: var(--cta-ring);
+
+  /* radius: large (0.875rem) */
+  --radius-sm: 0.525rem;
+  --radius-md: 0.7rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.225rem;
+  --radius-2xl: 1.575rem;
+  --radius-3xl: 1.925rem;
+  --radius-4xl: 2.275rem;
+}
+
+/* CTA metálico: los gradientes vienen del tema activo */
+@utility bg-cta { background-image: var(--cta-bg); }
+@utility bg-cta-hover { background-image: var(--cta-bg-hover); }
+
+/* Tarjeta de KPI con barra de tono a la izquierda (sobre el glass) */
+.glass[data-tone] { box-shadow: inset 3px 0 0 var(--stat-tone, transparent), var(--glass-shadow); }
+.glass[data-tone].glass--interactive:hover { box-shadow: inset 3px 0 0 var(--stat-tone, transparent), var(--glass-shadow-hover); }
+.glass[data-tone="accent"]  { --stat-tone: var(--accent); }
+.glass[data-tone="primary"] { --stat-tone: var(--text-primary); }
+.glass[data-tone="muted"]   { --stat-tone: var(--text-secondary); }
+.glass[data-tone="success"] { --stat-tone: var(--success); }
+.glass[data-tone="danger"]  { --stat-tone: var(--danger); }

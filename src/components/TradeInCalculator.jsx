@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { MessageCircle, Smartphone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { supabase, TABLES } from '../lib/supabase';
 import { formatARS } from '../lib/format';
 
@@ -76,14 +78,14 @@ export default function TradeInCalculator({ profile }) {
   };
 
   return (
-    <section className="section tradein" id="canje">
+    <section className="section tradein snap-slide" id="canje">
       <div className="container">
-        <div className="center" style={{ marginBottom: 40 }}>
+        <div className="center tradein__head">
           <p className="eyebrow fade-in">Plan Canje</p>
           <h2 className="title fade-in fade-in--delay-1" style={{ marginTop: 8 }}>
             Tu iPhone usado, parte del próximo.
           </h2>
-          <p className="body-lg fade-in fade-in--delay-2" style={{ marginTop: 14, maxWidth: 600, margin: '14px auto 0' }}>
+          <p className="body-lg tradein__lead fade-in fade-in--delay-2">
             Decinos qué iPhone tenés y en qué estado. Te damos una cotización
             estimada al instante.
           </p>
@@ -94,7 +96,7 @@ export default function TradeInCalculator({ profile }) {
             <div className="loading-state"><div className="spinner" /></div>
           ) : models.length === 0 ? (
             <div className="empty">
-              <div className="empty__icon">📱</div>
+              <Smartphone className="empty__icon mx-auto block size-12" strokeWidth={1.5} aria-hidden="true" />
               <div className="empty__title">Pronto disponible</div>
               <p>Estamos cargando los modelos. Contactanos por WhatsApp para una cotización personalizada.</p>
             </div>
@@ -138,13 +140,13 @@ export default function TradeInCalculator({ profile }) {
                 <div className={`tradein__amount ${!value ? 'tradein__amount--empty' : ''}`}>
                   {value ? formatARS(value) : (selected ? 'A confirmar' : 'Seleccioná tu modelo')}
                 </div>
-                <p className="body" style={{ fontSize: 13, marginTop: 4 }}>
+                <p className="body tradein__note">
                   Valor sujeto a revisión presencial del equipo.
                 </p>
                 {selected && (
-                  <button className="btn btn--primary btn--lg" onClick={sendToWhatsApp} style={{ marginTop: 18 }}>
-                    Coordinar canje por WhatsApp
-                  </button>
+                  <Button size="lg" className="tradein__cta" onClick={sendToWhatsApp}>
+                    <MessageCircle data-icon="inline-start" /> Coordinar canje por WhatsApp
+                  </Button>
                 )}
               </div>
             </>

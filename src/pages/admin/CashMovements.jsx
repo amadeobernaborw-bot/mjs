@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ListOrdered, Pencil, Plus, Scale, Trash2, TrendingDown, TrendingUp, Wallet, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import StatCard from '@/components/ui/StatCard';
 import { supabase, TABLES } from '../../lib/supabase';
 import Modal from '../../components/ui/Modal';
+import SortableHeader, { sortItems } from '../../components/ui/SortableHeader';
 import { formatARS } from '../../lib/format';
 
 const EMPTY = {
@@ -23,6 +28,7 @@ export default function CashMovements() {
   const [filterType, setFilterType] = useState('todos');
   const [filterCat, setFilterCat] = useState('todas');
   const [editorOpen, setEditorOpen] = useState(null);
+  const [sort, setSort] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -45,11 +51,14 @@ export default function CashMovements() {
     return { entrada, salida, balance: entrada - salida };
   }, [items]);
 
-  const filtered = items.filter((i) => {
-    const okType = filterType === 'todos' || i.type === filterType;
-    const okCat = filterCat === 'todas' || i.category === filterCat;
-    return okType && okCat;
-  });
+  const filtered = useMemo(() => {
+    const base = items.filter((i) => {
+      const okType = filterType === 'todos' || i.type === filterType;
+      const okCat = filterCat === 'todas' || i.category === filterCat;
+      return okType && okCat;
+    });
+    return sortItems(base, sort);
+  }, [items, filterType, filterCat, sort]);
 
   const setField = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
 
@@ -110,14 +119,20 @@ export default function CashMovements() {
           <h1 className="admin__title">Movimientos de caja</h1>
           <p className="admin__subtitle">Registro rápido de entradas y salidas.</p>
         </div>
-        <button className="btn btn--primary" onClick={() => setEditing({ ...EMPTY })}>+ Nuevo movimiento</button>
+        <Button onClick={() => setEditing({ ...EMPTY })}><Plus data-icon="inline-start" /> Nuevo movimiento</Button>
       </div>
 
       <div className="stat-grid">
-        <div className="stat"><div className="stat__label">Entradas</div><div className="stat__value" style={{ color: '#1ea846', fontSize: 26 }}>{formatARS(totals.entrada)}</div></div>
-        <div className="stat"><div className="stat__label">Salidas</div><div className="stat__value" style={{ color: 'var(--accent-red)', fontSize: 26 }}>{formatARS(totals.salida)}</div></div>
-        <div className="stat"><div className="stat__label">Balance</div><div className="stat__value" style={{ fontSize: 26, color: totals.balance >= 0 ? 'var(--accent-blue)' : 'var(--accent-red)' }}>{formatARS(totals.balance)}</div></div>
-        <div className="stat"><div className="stat__label">Movimientos</div><div className="stat__value">{items.length}</div></div>
+        <StatCard label="Entradas" icon={TrendingUp} tone="success" value={formatARS(totals.entrada)} valueClass="text-success" />
+        <StatCard label="Salidas" icon={TrendingDown} tone="danger" value={formatARS(totals.salida)} valueClass="text-destructive" />
+        <StatCard
+          label="Balance"
+          icon={Scale}
+          tone={totals.balance >= 0 ? 'accent' : 'danger'}
+          value={formatARS(totals.balance)}
+          valueClass={totals.balance >= 0 ? 'text-brand' : 'text-destructive'}
+        />
+        <StatCard label="Movimientos" icon={ListOrdered} tone="muted" value={items.length} />
       </div>
 
       <div className="toolbar">
@@ -135,22 +150,22 @@ export default function CashMovements() {
       {loading ? (
         <div className="loading-state"><div className="spinner" /></div>
       ) : filtered.length === 0 ? (
-        <div className="admin-card empty">
-          <div className="empty__icon">💰</div>
+        <Card className="empty">
+          <Wallet className="empty__icon mx-auto block size-12" strokeWidth={1.5} aria-hidden="true" />
           <div className="empty__title">No hay movimientos</div>
           <p>Cargá el primero para empezar a llevar la caja.</p>
-        </div>
+        </Card>
       ) : (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Categoría</th>
+                <SortableHeader label="Fecha" sortKey="occurred_at" sort={sort} onSort={setSort} />
+                <SortableHeader label="Tipo" sortKey="type" sort={sort} onSort={setSort} />
+                <SortableHeader label="Categoría" sortKey="category" sort={sort} onSort={setSort} />
                 <th>Detalle</th>
-                <th>Forma de pago</th>
-                <th style={{ textAlign: 'right' }}>Monto</th>
+                <SortableHeader label="Forma de pago" sortKey="payment_method" sort={sort} onSort={setSort} />
+                <SortableHeader label="Monto" sortKey="amount" sort={sort} onSort={setSort} align="right" />
                 <th></th>
               </tr>
             </thead>
@@ -162,13 +177,13 @@ export default function CashMovements() {
                   <td>{m.category}</td>
                   <td style={{ maxWidth: 240, color: 'var(--text-secondary)' }}>{m.detail || '—'}</td>
                   <td>{m.payment_method}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 600, color: m.type === 'entrada' ? '#1ea846' : 'var(--accent-red)' }}>
+                  <td style={{ textAlign: 'right', fontWeight: 600, color: m.type === 'entrada' ? 'var(--success)' : 'var(--danger)' }}>
                     {m.type === 'salida' ? '−' : '+'}{formatARS(m.amount)}
                   </td>
                   <td>
                     <div className="table__actions">
-                      <button className="btn btn--sm btn--ghost" onClick={() => setEditing({ ...EMPTY, ...m, occurred_at: new Date(m.occurred_at).toISOString().slice(0,16) })}>Editar</button>
-                      <button className="btn btn--sm btn--ghost" onClick={() => remove(m)} style={{ color: 'var(--accent-red)' }}>Borrar</button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditing({ ...EMPTY, ...m, occurred_at: new Date(m.occurred_at).toISOString().slice(0,16) })}><Pencil data-icon="inline-start" /> Editar</Button>
+                      <Button variant="destructive" size="sm" onClick={() => remove(m)}><Trash2 data-icon="inline-start" /> Borrar</Button>
                     </div>
                   </td>
                 </tr>
@@ -184,8 +199,8 @@ export default function CashMovements() {
         title={editing?.id ? 'Editar movimiento' : 'Nuevo movimiento'}
         footer={
           <>
-            <button className="btn btn--ghost" onClick={() => setEditing(null)}>Cancelar</button>
-            <button form="cm-form" type="submit" className="btn btn--primary" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button form="cm-form" type="submit" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</Button>
           </>
         }
       >
@@ -208,7 +223,7 @@ export default function CashMovements() {
                 <select className="select" value={editing.category} onChange={handleCatChange} required>
                   <option value="">Seleccionar…</option>
                   {categoriesForType.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                  <option value="__new">＋ Otra (cargar nueva)…</option>
+                  <option value="__new">+ Otra (cargar nueva)…</option>
                 </select>
               </div>
               <div className="field">
@@ -216,7 +231,7 @@ export default function CashMovements() {
                 <select className="select" value={editing.payment_method} onChange={handleMethodChange} required>
                   <option value="">Seleccionar…</option>
                   {methods.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
-                  <option value="__new">＋ Otra (cargar nueva)…</option>
+                  <option value="__new">+ Otra (cargar nueva)…</option>
                 </select>
               </div>
               <div className="field field--full">
@@ -237,7 +252,7 @@ export default function CashMovements() {
           <div className="modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
             <div className="modal__head">
               <h3 className="modal__title">Cargar {editorOpen === 'cat' ? 'nueva categoría' : 'nuevo método de pago'}</h3>
-              <button className="modal__close" onClick={() => setEditorOpen(null)}>×</button>
+              <Button variant="ghost" size="icon-sm" className="rounded-full" onClick={() => setEditorOpen(null)} aria-label="Cerrar"><X /></Button>
             </div>
             <CustomInput onSave={addCustom} onCancel={() => setEditorOpen(null)} />
           </div>
@@ -258,8 +273,8 @@ function CustomInput({ onSave, onCancel }) {
         </div>
       </div>
       <div className="modal__foot">
-        <button className="btn btn--ghost" onClick={onCancel}>Cancelar</button>
-        <button className="btn btn--primary" onClick={() => onSave(v)} disabled={!v.trim()}>Guardar</button>
+        <Button variant="outline" onClick={onCancel}>Cancelar</Button>
+        <Button onClick={() => onSave(v)} disabled={!v.trim()}>Guardar</Button>
       </div>
     </>
   );

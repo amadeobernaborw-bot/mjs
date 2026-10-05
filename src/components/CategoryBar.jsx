@@ -1,6 +1,6 @@
-export default function CategoryBar({ categories, active, onChange, models = [], activeModel, onChangeModel }) {
+export default function CategoryBar({ categories, active, onChange, models = [], activeModel, onChangeModel, embedded = false }) {
   return (
-    <div className="catbar">
+    <div className={`catbar ${embedded ? 'catbar--embedded' : ''}`}>
       <div className="catbar__scroll" role="tablist" aria-label="Categorías de productos">
         {categories.map((cat) => (
           <button

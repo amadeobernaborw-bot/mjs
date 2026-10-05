@@ -59,7 +59,7 @@ src/
 │   ├── TradeInCalculator.jsx
 │   ├── ContactSection.jsx
 │   ├── Footer.jsx
-│   ├── WhatsAppFAB.jsx
+│   ├── SocialFAB.jsx
 │   └── InvoiceDocument.jsx
 ├── pages/
 │   ├── Store.jsx                # storefront pública
@@ -92,7 +92,7 @@ src/
 - Bento grid de servicios
 - Calculadora de Plan Canje (lee `trade_in_models`)
 - Sección de contacto con WhatsApp + Instagram + Facebook + mapa
-- Botón flotante de WhatsApp
+- Botón flotante desplegable con WhatsApp, Instagram y Facebook
 - Animaciones fade-in con IntersectionObserver
 - Responsive 320 → 1440px
 

@@ -1,286 +1,278 @@
-import { useEffect, useState } from 'react';
-import { supabase, TABLES, BUCKETS } from '../../lib/supabase';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronsDownUp, ChevronsUpDown, Package, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import InlinePanel from '../../components/ui/InlinePanel';
-import TaxonomyPicker from '../../components/TaxonomyPicker';
-import { formatARS, formatUSD } from '../../lib/format';
+import { useTaxonomy } from '../../components/TaxonomyPicker';
+import InventoryTree from '../../components/admin/inventory/InventoryTree';
+import ModelForm from '../../components/admin/inventory/ModelForm';
+import VariantForm from '../../components/admin/inventory/VariantForm';
+import VariantMatrix from '../../components/admin/inventory/VariantMatrix';
+import { CATEGORY_ORDER, groupInventory } from '../../lib/inventory/variants';
+import {
+  deleteModel, deleteVariant, fetchInventory, insertVariants, inventoryErrorMessage,
+  saveModel, saveVariant, setModelActive, updateVariant, variantPayload,
+} from '../../lib/inventory/api';
 
-const EMPTY = {
-  id: null,
-  name: '',
-  category: '',
-  model: '',
-  capacity: '',
-  condition: '',
-  description: '',
-  price_ars: '',
-  price_usd: '',
-  stock: 0,
-  image_url: '',
-  is_active: true,
+const FORM_ID = 'inv-form';
+const INITIAL_FILTERS = { search: '', category: 'Todas', visibility: 'Todos', stockOnly: false };
+
+const PANEL_TITLES = {
+  model: (p) => (p.model?.id ? 'Editar modelo' : 'Nuevo modelo'),
+  variant: (p) => `${p.variant?.id ? 'Editar' : 'Nueva'} variante · ${p.model.name}`,
+  matrix: (p) => `Agregar varias · ${p.model.name}`,
 };
 
-function buildName(t) {
-  const parts = [t.model || t.category, t.capacity, t.condition && `(${t.condition})`].filter(Boolean);
-  return parts.join(' ').trim();
-}
-
 export default function Inventory() {
-  const [items, setItems] = useState([]);
+  const tax = useTaxonomy();
+  const [data, setData] = useState({ models: [], variants: [] });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterCat, setFilterCat] = useState('Todas');
-  const [editing, setEditing] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [expanded, setExpanded] = useState(() => new Set());
+  const [panel, setPanel] = useState(null); // { kind: 'model' | 'variant' | 'matrix', model, variant, seq }
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [autoName, setAutoName] = useState(true);
+  const [panelError, setPanelError] = useState(null);
+  const [notice, setNotice] = useState(null);
 
-  const load = async () => {
-    setLoading(true);
-    const { data } = await supabase.from(TABLES.products).select('*').order('created_at', { ascending: false });
-    setItems(data || []);
-    setLoading(false);
-  };
+  // Solo vale la última lectura: una más vieja que llega tarde no pisa cambios nuevos
+  const loadSeq = useRef(0);
+  const panelRef = useRef(null);
+  panelRef.current = panel;
 
-  useEffect(() => { load(); }, []);
+  const load = useCallback(async () => {
+    const seq = ++loadSeq.current;
+    try {
+      const result = await fetchInventory();
+      if (seq !== loadSeq.current) return;
+      setData(result);
+      setLoadError(null);
+    } catch (err) {
+      if (seq === loadSeq.current) setLoadError(inventoryErrorMessage(err));
+    } finally {
+      if (seq === loadSeq.current) setLoading(false);
+    }
+  }, []);
 
-  const filtered = items.filter((p) => {
-    const okCat = filterCat === 'Todas' || p.category === filterCat;
-    const okSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase());
-    return okCat && okSearch;
+  useEffect(() => { load(); }, [load]);
+
+  const order = useMemo(() => ({
+    conditions: tax.conditions.map((c) => c.name),
+    colors: tax.colors.map((c) => c.name),
+  }), [tax.conditions, tax.colors]);
+
+  const lines = useMemo(() => groupInventory(data.models, data.variants, filters, order), [data, filters, order]);
+  const shownModelIds = useMemo(() => lines.flatMap((l) => l.models.map((m) => m.id)), [lines]);
+  const totals = useMemo(() => ({
+    models: data.models.length,
+    variants: data.variants.length,
+    units: data.variants.reduce((acc, v) => acc + (Number(v.stock) || 0), 0),
+  }), [data]);
+  const categories = useMemo(() => {
+    const present = new Set(data.models.map((m) => m.type_name));
+    return [...CATEGORY_ORDER.filter((c) => present.has(c)), ...[...present].filter((c) => !CATEGORY_ORDER.includes(c))];
+  }, [data.models]);
+
+  // Con búsqueda, todo lo encontrado se ve abierto
+  const filtering = !!filters.search.trim();
+  const isOpen = (id) => filtering || expanded.has(id);
+  const toggleOpen = (id) => setExpanded((s) => {
+    const next = new Set(s);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
   });
+  const allOpen = shownModelIds.length > 0 && shownModelIds.every((id) => expanded.has(id));
+  const toggleAll = () => setExpanded(allOpen ? new Set() : new Set(shownModelIds));
 
-  const allCategories = [...new Set(items.map((p) => p.category).filter(Boolean))];
+  const setFilter = (key, value) => setFilters((f) => ({ ...f, [key]: value }));
+  const variantsOf = (modelId) => data.variants.filter((v) => v.model_id === modelId);
 
-  const openNew = () => { setEditing({ ...EMPTY }); setAutoName(true); };
-  const openEdit = (p) => { setEditing({ ...EMPTY, ...p }); setAutoName(false); };
-  const close = () => setEditing(null);
+  // El modelo del panel, actualizado si se editó mientras estaba abierto
+  const panelModel = panel?.model && (data.models.find((m) => m.id === panel.model.id) || panel.model);
 
-  const setField = (k, v) => setEditing((e) => ({ ...e, [k]: v }));
+  const openPanel = (next) => { setPanelError(null); setUploading(false); setPanel({ ...next, seq: Date.now() }); };
+  const closePanel = useCallback(() => { setPanel(null); setPanelError(null); setUploading(false); }, []);
 
-  const handleTaxonomyChange = (t) => {
-    setEditing((e) => {
-      const next = {
-        ...e,
-        category: t.type || e.category,
-        model: t.model,
-        capacity: t.capacity,
-        condition: t.condition,
-        description: t.description ?? e.description,
-      };
-      if (autoName) next.name = buildName({ category: next.category, model: next.model, capacity: next.capacity, condition: next.condition }) || e.name;
-      return next;
-    });
+  /** Corre una escritura, avisa si falla y recarga. */
+  const run = async (fn) => {
+    try {
+      await fn();
+      setNotice(null);
+    } catch (err) {
+      setNotice(inventoryErrorMessage(err));
+    }
+    await load();
   };
 
-  const handleImage = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    const ext = file.name.split('.').pop();
-    const path = `prod-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from(BUCKETS.productImages).upload(path, file, { cacheControl: '3600', upsert: false });
-    if (!error) {
-      const { data } = supabase.storage.from(BUCKETS.productImages).getPublicUrl(path);
-      setField('image_url', data.publicUrl);
-    } else { alert('Error subiendo imagen: ' + error.message); }
-    setUploading(false);
-  };
-
-  const save = async (e) => {
-    e.preventDefault();
+  const submitPanel = async (payload) => {
+    // Si se cancela o se abre otro panel mientras guarda, el resultado no toca el panel nuevo
+    const seq = panel.seq;
+    const stillOpen = () => panelRef.current?.seq === seq;
     setSaving(true);
-    const payload = {
-      name: editing.name || buildName(editing) || 'Sin nombre',
-      category: editing.category || 'Otros',
-      model: editing.model || null,
-      capacity: editing.capacity || null,
-      condition: editing.condition || null,
-      description: editing.description || null,
-      price_ars: editing.price_ars ? Number(editing.price_ars) : null,
-      price_usd: editing.price_usd ? Number(editing.price_usd) : null,
-      stock: Number(editing.stock) || 0,
-      image_url: editing.image_url || null,
-      is_active: !!editing.is_active,
-    };
-    let resp;
-    if (editing.id) resp = await supabase.from(TABLES.products).update(payload).eq('id', editing.id);
-    else resp = await supabase.from(TABLES.products).insert(payload);
-    setSaving(false);
-    if (resp.error) { alert(resp.error.message); return; }
-    close(); load();
+    setPanelError(null);
+    try {
+      if (panel.kind === 'model') {
+        const isNew = !payload.id;
+        const saved = await saveModel(payload, variantsOf(payload.id));
+        await load();
+        if (isNew) setExpanded((s) => new Set(s).add(saved.id));
+        if (!stillOpen()) return;
+        // Recién creado: se sigue con su primera variante
+        if (isNew) openPanel({ kind: 'variant', model: saved, variant: null });
+        else closePanel();
+      } else if (panel.kind === 'variant') {
+        await saveVariant(panel.variant?.id, variantPayload(panelModel, payload));
+        await load();
+        if (stillOpen()) closePanel();
+      } else {
+        if (payload.length === 0) throw new Error('No hay variantes nuevas: elegí capacidades o colores que no estén cargados.');
+        await insertVariants(payload.map((v) => variantPayload(panelModel, v)));
+        await load();
+        if (stillOpen()) closePanel();
+      }
+    } catch (err) {
+      const message = err?.code ? inventoryErrorMessage(err) : err.message;
+      if (stillOpen()) setPanelError(message); else setNotice(message);
+      // Una escritura a medias (p. ej. modelo guardado y variantes no) tiene que verse
+      load();
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleActive = async (p) => {
-    await supabase.from(TABLES.products).update({ is_active: !p.is_active }).eq('id', p.id); load();
+  const adjustStock = async (variant, delta) => {
+    const stock = Math.max(0, (Number(variant.stock) || 0) + delta);
+    const swap = (value) => setData((d) => ({ ...d, variants: d.variants.map((v) => (v.id === variant.id ? { ...v, stock: value } : v)) }));
+    loadSeq.current += 1; // descarta lecturas en curso que traerían el stock viejo
+    swap(stock);
+    try {
+      await updateVariant(variant.id, { stock });
+    } catch (err) {
+      setNotice(inventoryErrorMessage(err));
+      load();
+    }
   };
-  const remove = async (p) => {
-    if (!confirm(`¿Eliminar "${p.name}"? Esta acción es permanente.`)) return;
-    await supabase.from(TABLES.products).delete().eq('id', p.id); load();
+
+  const actions = {
+    editModel: (model) => openPanel({ kind: 'model', model }),
+    addVariant: (model) => openPanel({ kind: 'variant', model, variant: null }),
+    addMatrix: (model) => openPanel({ kind: 'matrix', model }),
+    editVariant: (model, variant) => openPanel({ kind: 'variant', model, variant }),
+    duplicateVariant: (model, variant) => openPanel({ kind: 'variant', model, variant: { ...variant, id: null } }),
+    toggleModel: (model) => run(() => setModelActive(model.id, model.is_active === false)),
+    deleteModel: (model) => {
+      const count = variantsOf(model.id).length;
+      if (count > 0) {
+        setNotice(`"${model.name}" tiene ${count} ${count === 1 ? 'variante' : 'variantes'}. Borralas primero o ocultá el modelo.`);
+        return;
+      }
+      if (!confirm(`¿Eliminar el modelo "${model.name}"? Esta acción es permanente.`)) return;
+      run(() => deleteModel(model.id));
+    },
+    toggleVariant: (variant) => run(() => updateVariant(variant.id, { is_active: !variant.is_active })),
+    deleteVariant: (variant) => {
+      if (!confirm(`¿Eliminar "${variant.name}"? Esta acción es permanente.`)) return;
+      run(() => deleteVariant(variant.id));
+    },
+    adjustStock,
   };
 
   return (
     <div className="page-layout">
-      <div className={`page-layout__main ${editing ? 'has-panel' : ''}`}>
-      <div className="admin__head">
-        <div>
-          <h1 className="admin__title">Inventario</h1>
-          <p className="admin__subtitle">{items.length} productos en total.</p>
+      <div className={`page-layout__main ${panel ? 'has-panel' : ''}`}>
+        <div className="admin__head">
+          <div>
+            <h1 className="admin__title">Inventario</h1>
+            <p className="admin__subtitle">
+              {totals.models} modelos · {totals.variants} variantes · {totals.units} unidades en stock.
+            </p>
+          </div>
+          <Button onClick={() => openPanel({ kind: 'model', model: null })}><Plus data-icon="inline-start" /> Nuevo modelo</Button>
         </div>
-        <button className="btn btn--primary" onClick={openNew}>+ Nuevo producto</button>
+
+        <div className="toolbar inv-toolbar">
+          <input
+            className="input toolbar__search"
+            type="search"
+            placeholder="Buscar modelo, capacidad, color…"
+            aria-label="Buscar en el inventario"
+            value={filters.search}
+            onChange={(e) => setFilter('search', e.target.value)}
+          />
+          <div className="inv-toolbar__filters">
+            <select className="select inv-toolbar__select" aria-label="Tipo" value={filters.category} onChange={(e) => setFilter('category', e.target.value)}>
+              <option value="Todas">Todos los tipos</option>
+              {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select className="select inv-toolbar__select" aria-label="Visibilidad" value={filters.visibility} onChange={(e) => setFilter('visibility', e.target.value)}>
+              <option value="Todos">Visibles y ocultas</option>
+              <option value="Activos">Solo visibles</option>
+              <option value="Ocultos">Solo ocultas</option>
+            </select>
+            <label className="inv-check inv-toolbar__check">
+              <input type="checkbox" checked={filters.stockOnly} onChange={(e) => setFilter('stockOnly', e.target.checked)} />
+              <span>Con stock</span>
+            </label>
+            <Button variant="ghost" size="sm" onClick={toggleAll} disabled={filtering || shownModelIds.length === 0}>
+              {allOpen ? <ChevronsDownUp data-icon="inline-start" /> : <ChevronsUpDown data-icon="inline-start" />}
+              {allOpen ? 'Contraer todo' : 'Expandir todo'}
+            </Button>
+          </div>
+        </div>
+
+        {notice && (
+          <div className="inv-notice" role="alert">
+            <span>{notice}</span>
+            <Button variant="ghost" size="sm" onClick={() => setNotice(null)}>Cerrar</Button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="loading-state"><div className="spinner" /></div>
+        ) : loadError ? (
+          <Card className="empty">
+            <div className="empty__title">No se pudo cargar el inventario</div>
+            <p>{loadError}</p>
+            <Button variant="outline" className="mt-3" onClick={() => { setLoading(true); load(); }}>Reintentar</Button>
+          </Card>
+        ) : lines.length === 0 ? (
+          <Card className="empty">
+            <Package className="empty__icon mx-auto block size-12" strokeWidth={1.5} aria-hidden="true" />
+            <div className="empty__title">{data.models.length ? 'Nada coincide con los filtros' : 'No hay modelos'}</div>
+            <p>{data.models.length ? 'Probá con otra búsqueda o quitá filtros.' : 'Cargá tu primer modelo para empezar.'}</p>
+            {data.models.length > 0 && <Button variant="outline" className="mt-3" onClick={() => setFilters(INITIAL_FILTERS)}>Quitar filtros</Button>}
+          </Card>
+        ) : (
+          <InventoryTree lines={lines} isOpen={isOpen} onToggleOpen={toggleOpen} actions={actions} />
+        )}
       </div>
 
-      <div className="toolbar">
-        <input className="input toolbar__search" placeholder="Buscar por nombre…" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select className="select" value={filterCat} onChange={(e) => setFilterCat(e.target.value)} style={{ width: 'auto' }}>
-          <option>Todas</option>
-          {allCategories.map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </div>
-
-      {loading ? (
-        <div className="loading-state"><div className="spinner" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="admin-card empty">
-          <div className="empty__icon">📦</div>
-          <div className="empty__title">No hay productos</div>
-          <p>Cargá tu primer producto para empezar.</p>
-        </div>
-      ) : (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Capacidad</th>
-                <th>Estado</th>
-                <th>Precio ARS</th>
-                <th>Stock</th>
-                <th>Visible</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id}>
-                  <td style={{ width: 56 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--bg-secondary)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {p.image_url ? <img src={p.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>—</span>}
-                    </div>
-                  </td>
-                  <td><strong>{p.name}</strong></td>
-                  <td>{p.category}</td>
-                  <td>{p.capacity || '—'}</td>
-                  <td>{p.condition || '—'}</td>
-                  <td>{p.price_ars ? formatARS(p.price_ars) : '—'}</td>
-                  <td>{p.stock || 0}</td>
-                  <td>
-                    <span className={`badge ${p.is_active ? 'badge--green' : 'badge--gray'}`}>{p.is_active ? 'Activo' : 'Oculto'}</span>
-                  </td>
-                  <td>
-                    <div className="table__actions">
-                      <button className="btn btn--sm btn--ghost" onClick={() => openEdit(p)}>Editar</button>
-                      <button className="btn btn--sm btn--ghost" onClick={() => toggleActive(p)}>{p.is_active ? 'Ocultar' : 'Mostrar'}</button>
-                      <button className="btn btn--sm btn--ghost" onClick={() => remove(p)} style={{ color: 'var(--accent-red)' }}>Borrar</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      </div>
       <InlinePanel
-        open={!!editing}
-        onClose={close}
-        title={editing?.id ? 'Editar producto' : 'Nuevo producto'}
-        footer={
+        open={!!panel}
+        onClose={closePanel}
+        wide={panel?.kind === 'matrix'}
+        title={panel ? PANEL_TITLES[panel.kind](panel) : ''}
+        footer={(
           <>
-            <button type="button" className="btn btn--ghost" onClick={close}>Cancelar</button>
-            <button type="submit" form="prod-form" className="btn btn--primary" disabled={saving || uploading}>
-              {saving ? 'Guardando…' : 'Guardar'}
-            </button>
+            <Button variant="outline" type="button" onClick={closePanel}>Cancelar</Button>
+            <Button type="submit" form={FORM_ID} disabled={saving || uploading}>
+              {saving ? 'Guardando…' : panel?.kind === 'model' && !panel.model?.id ? 'Crear y agregar variante' : 'Guardar'}
+            </Button>
           </>
-        }
+        )}
       >
-        {editing && (
-          <form id="prod-form" onSubmit={save}>
-            <Disclosure title="Carga rápida (Tipo · Modelo · Capacidad · Estado)" defaultOpen>
-              <TaxonomyPicker
-                value={{
-                  type: editing.category,
-                  model: editing.model,
-                  capacity: editing.capacity,
-                  condition: editing.condition,
-                  description: editing.description,
-                }}
-                onChange={handleTaxonomyChange}
-              />
-            </Disclosure>
-
-            <Disclosure title="Detalles, precios y stock" defaultOpen>
-              <div className="form-grid">
-                <div className="field field--full">
-                  <label className="field__label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Nombre del producto</span>
-                    <label style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-tertiary)', display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <input type="checkbox" checked={autoName} onChange={(e) => setAutoName(e.target.checked)} />
-                      Auto-generar
-                    </label>
-                  </label>
-                  <input className="input" value={editing.name} onChange={(e) => { setAutoName(false); setField('name', e.target.value); }} required placeholder="ej: iPhone 15 Pro 256GB Nuevo sellado" />
-                </div>
-
-                <div className="field"><label className="field__label">Stock</label>
-                  <input type="number" className="input" value={editing.stock} onChange={(e) => setField('stock', e.target.value)} min="0" />
-                </div>
-                <div className="field"><label className="field__label">Precio ARS</label>
-                  <input type="number" className="input" value={editing.price_ars} onChange={(e) => setField('price_ars', e.target.value)} min="0" step="0.01" />
-                </div>
-                <div className="field"><label className="field__label">Precio USD</label>
-                  <input type="number" className="input" value={editing.price_usd} onChange={(e) => setField('price_usd', e.target.value)} min="0" step="0.01" />
-                </div>
-
-                <div className="field field--full">
-                  <label className="field__label">Imagen</label>
-                  <div className="image-uploader">
-                    <div className="image-uploader__preview">
-                      {editing.image_url ? <img src={editing.image_url} alt="" /> : <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>—</span>}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <input type="file" accept="image/*" onChange={handleImage} disabled={uploading} />
-                      <p className="field__hint" style={{ marginTop: 4 }}>{uploading ? 'Subiendo…' : 'JPG, PNG o WebP'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="field field--full">
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                    <input type="checkbox" checked={!!editing.is_active} onChange={(e) => setField('is_active', e.target.checked)} />
-                    <span>Mostrar en el storefront</span>
-                  </label>
-                </div>
-              </div>
-            </Disclosure>
-          </form>
+        {panelError && <p className="inv-notice inv-notice--panel" role="alert">{panelError}</p>}
+        {panel?.kind === 'model' && (
+          <ModelForm key={panel.seq} formId={FORM_ID} model={panel.model} models={data.models} tax={tax} onSubmit={submitPanel} onUploadingChange={setUploading} />
+        )}
+        {panel?.kind === 'variant' && (
+          <VariantForm key={panel.seq} formId={FORM_ID} model={panelModel} variant={panel.variant} tax={tax} onSubmit={submitPanel} onUploadingChange={setUploading} />
+        )}
+        {panel?.kind === 'matrix' && (
+          <VariantMatrix key={panel.seq} formId={FORM_ID} model={panelModel} existing={variantsOf(panel.model.id)} tax={tax} onSubmit={submitPanel} />
         )}
       </InlinePanel>
-    </div>
-  );
-}
-
-function Disclosure({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className={`disclosure ${open ? 'is-open' : ''}`}>
-      <button type="button" className="disclosure__head" onClick={() => setOpen(!open)}>
-        <span>{title}</span>
-        <span className="disclosure__caret">▾</span>
-      </button>
-      <div className="disclosure__body">{children}</div>
     </div>
   );
 }

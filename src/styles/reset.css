@@ -5,7 +5,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-primary);
+  background: var(--surface-page);
   color: var(--text-primary);
   line-height: 1.47059;
   font-weight: 400;
@@ -18,4 +18,5 @@ button { background: none; border: 0; cursor: pointer; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; }
 h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.1; letter-spacing: -0.04em; }
-:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 3px; border-radius: 4px; }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--wine); color: var(--silver); }

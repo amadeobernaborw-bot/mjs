@@ -1,111 +1,132 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase, TABLES } from '../lib/supabase';
+import { supabase, TABLES, friendlyDbError } from '../lib/supabase';
+import { allRows } from '../lib/pagination';
 import { useStoreProfile } from '../hooks/useStoreProfile';
 import { useScrollObserver } from '../hooks/useScrollObserver';
+import { useSnapScroll } from '../hooks/useSnapScroll';
+import { useDocumentTheme, THEME_SCOPES } from '../lib/theme';
+import { CATEGORY_ORDER, storefrontModels } from '../lib/inventory/variants';
 import Nav from '../components/Nav';
 import Hero from '../components/Hero';
 import CategoryBar from '../components/CategoryBar';
 import ProductCarousel from '../components/ProductCarousel';
+import VariantPicker from '../components/VariantPicker';
 import BentoGrid from '../components/BentoGrid';
 import TradeInCalculator from '../components/TradeInCalculator';
 import ContactSection from '../components/ContactSection';
 import Footer from '../components/Footer';
-import WhatsAppFAB from '../components/WhatsAppFAB';
+import SocialFAB from '../components/SocialFAB';
+import SectionDots from '../components/SectionDots';
 
 const ALL = 'Todos';
-const CATEGORY_ORDER = ['Todos', 'iPhone', 'Mac', 'iPad', 'Watch', 'AirPods', 'Accesorios'];
 
 export default function Store() {
   const { profile } = useStoreProfile();
-  const [products, setProducts] = useState([]);
+  useDocumentTheme(THEME_SCOPES.storefront, profile.storefront_theme);
+  useSnapScroll();
+  const [models, setModels] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [activeCat, setActiveCat] = useState(ALL);
-  const [activeModel, setActiveModel] = useState(null);
+  const [activeLine, setActiveLine] = useState(null);
+  const [picked, setPicked] = useState(null);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from(TABLES.products)
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-      setProducts(data || []);
-      setLoadingProducts(false);
+      try {
+        const [catalogModels, variants, conditions] = await Promise.all([
+          allRows(() => supabase.from(TABLES.catalogModels).select('*').eq('is_active', true).order('id')),
+          allRows(() => supabase.from(TABLES.products).select('*').eq('is_active', true).order('id')),
+          allRows(() => supabase.from(TABLES.catalogConditions).select('name').order('sort_order').order('id')),
+        ]);
+        setModels(storefrontModels(catalogModels, variants, { conditions: conditions.map((c) => c.name) }));
+      } catch (err) {
+        setLoadError(friendlyDbError(err));
+      } finally {
+        setLoadingProducts(false);
+      }
     })();
   }, []);
 
   const categories = useMemo(() => {
-    const present = new Set(products.map((p) => p.category));
-    return CATEGORY_ORDER.filter((c) => c === ALL || present.has(c));
-  }, [products]);
+    const present = new Set(models.map((m) => m.type_name));
+    return [ALL, ...CATEGORY_ORDER.filter((c) => present.has(c))];
+  }, [models]);
 
-  const modelsForCat = useMemo(() => {
+  // Sub-filtro por línea ("iPhone 15" agrupa 15, Plus, Pro y Pro Max), de la más nueva a la más vieja
+  const linesForCat = useMemo(() => {
     if (activeCat === ALL) return [];
-    const set = new Set();
-    products.forEach((p) => {
-      if (p.category === activeCat) {
-        const m = p.model || (p.name?.match(/iPhone\s+\d+\s*(Pro\s*Max|Pro|Plus)?/i)?.[0]) || null;
-        if (m) set.add(m.trim());
-      }
-    });
-    return [...set].sort();
-  }, [products, activeCat]);
+    return [...new Set(models.filter((m) => m.type_name === activeCat).map((m) => m.line))];
+  }, [models, activeCat]);
 
-  const visible = useMemo(() => {
-    let list = products;
-    if (activeCat !== ALL) list = list.filter((p) => p.category === activeCat);
-    if (activeModel) {
-      list = list.filter((p) => {
-        const m = p.model || (p.name?.match(/iPhone\s+\d+\s*(Pro\s*Max|Pro|Plus)?/i)?.[0]) || '';
-        return m.trim().toLowerCase() === activeModel.toLowerCase();
-      });
-    }
-    return list;
-  }, [products, activeCat, activeModel]);
+  const visible = useMemo(() => models.filter((m) => (activeCat === ALL || m.type_name === activeCat)
+    && (!activeLine || m.line === activeLine)), [models, activeCat, activeLine]);
 
-  useEffect(() => { setActiveModel(null); }, [activeCat]);
+  useEffect(() => { setActiveLine(null); }, [activeCat]);
 
-  useScrollObserver('.fade-in, .scale-in', [products, activeCat, activeModel, profile.id]);
+  useScrollObserver('.fade-in, .scale-in', [models, activeCat, activeLine, profile.id]);
 
-  const handleContact = (product) => {
+  const handleContact = (model, variant) => {
     if (!profile?.whatsapp) return;
     const wa = profile.whatsapp.replace(/[^\d]/g, '');
-    const msg = `Hola! Me interesa el *${product.name}* (${product.category}). ¿Tienen disponibilidad?`;
+    const item = variant?.name || model.name;
+    const battery = variant?.battery_health != null ? `, batería ${variant.battery_health}%` : '';
+    const msg = `Hola! Me interesa el *${item}*${battery} (${model.type_name}). ¿Tienen disponibilidad?`;
     window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
+
+  // Un modelo con una sola variante no necesita selector: se consulta directo
+  const openModel = (model) => {
+    if (model.variants.length === 1) handleContact(model, model.variants[0]);
+    else setPicked(model);
   };
 
   return (
     <>
       <Nav profile={profile} />
-      <CategoryBar
-        categories={categories}
-        active={activeCat}
-        onChange={setActiveCat}
-        models={modelsForCat}
-        activeModel={activeModel}
-        onChangeModel={setActiveModel}
-      />
 
       <main>
         <Hero profile={profile} />
 
-        <section className="container section" id="productos">
-          {loadingProducts ? (
-            <div className="loading-state"><div className="spinner spinner--lg" /></div>
-          ) : (
-            <ProductCarousel products={visible} onContact={handleContact} />
-          )}
+        <section className="section section--catalog snap-slide" id="productos">
+          <div className="container slide-fit">
+            <CategoryBar
+              categories={categories}
+              active={activeCat}
+              onChange={setActiveCat}
+              models={linesForCat}
+              activeModel={activeLine}
+              onChangeModel={setActiveLine}
+              embedded
+            />
+            {loadingProducts ? (
+              <div className="loading-state"><div className="spinner spinner--lg" /></div>
+            ) : loadError ? (
+              <div className="empty" role="alert">
+                <div className="empty__title">No pudimos cargar el catálogo</div>
+                <p>Probá recargar la página en unos minutos.</p>
+              </div>
+            ) : (
+              <ProductCarousel models={visible} onOpen={openModel} />
+            )}
+          </div>
         </section>
 
         <BentoGrid />
 
         <TradeInCalculator profile={profile} />
 
-        <ContactSection profile={profile} />
+        {/* Última pantalla: contacto + footer compacto */}
+        <div className="snap-slide snap-slide--last">
+          <ContactSection profile={profile} />
+          <Footer profile={profile} />
+        </div>
       </main>
 
-      <Footer profile={profile} />
-      <WhatsAppFAB phone={profile?.whatsapp} />
+      {picked && <VariantPicker model={picked} onClose={() => setPicked(null)} onContact={handleContact} />}
+
+      <SectionDots />
+      <SocialFAB profile={profile} />
     </>
   );
 }

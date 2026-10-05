@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { supabase, TABLES } from '../../lib/supabase';
 import InlinePanel from '../../components/ui/InlinePanel';
 import TaxonomyPicker from '../../components/TaxonomyPicker';
+import SortableHeader, { sortItems } from '../../components/ui/SortableHeader';
 import { formatARS } from '../../lib/format';
 
 const EMPTY = {
@@ -25,6 +29,17 @@ export default function TradeInConfig() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [sort, setSort] = useState(null);
+  const [filterActive, setFilterActive] = useState('Todos');
+
+  const visible = useMemo(() => {
+    const base = models.filter((m) => {
+      if (filterActive === 'Activos') return m.is_active;
+      if (filterActive === 'Ocultos') return !m.is_active;
+      return true;
+    });
+    return sortItems(base, sort);
+  }, [models, sort, filterActive]);
 
   const load = async () => {
     setLoading(true);
@@ -36,13 +51,17 @@ export default function TradeInConfig() {
   useEffect(() => { load(); }, []);
 
   const handleTax = (t) => {
-    setEditing((e) => ({
-      ...e,
-      type_name: t.type || e.type_name,
-      model: t.model || e.model,
-      capacity: t.capacity || e.capacity,
-      device_model: buildDeviceModel({ model: t.model || e.model, capacity: t.capacity || e.capacity }),
-    }));
+    setEditing((e) => {
+      // Permitir vaciar (cuando el usuario re-selecciona "Seleccionar…")
+      const next = {
+        ...e,
+        type_name: t.type ?? e.type_name,
+        model: t.model ?? '',
+        capacity: t.capacity ?? '',
+      };
+      next.device_model = buildDeviceModel({ model: next.model, capacity: next.capacity });
+      return next;
+    });
   };
 
   const save = async (e) => {
@@ -83,33 +102,41 @@ export default function TradeInConfig() {
           <h1 className="admin__title">Plan Canje</h1>
           <p className="admin__subtitle">Precios de cotización por modelo y estado.</p>
         </div>
-        <button className="btn btn--primary" onClick={() => setEditing({ ...EMPTY })}>+ Nuevo modelo</button>
+        <Button onClick={() => setEditing({ ...EMPTY })}><Plus data-icon="inline-start" /> Nuevo modelo</Button>
+      </div>
+
+      <div className="toolbar">
+        <select className="select" value={filterActive} onChange={(e) => setFilterActive(e.target.value)} style={{ width: 'auto' }}>
+          <option>Todos</option>
+          <option>Activos</option>
+          <option>Ocultos</option>
+        </select>
       </div>
 
       {loading ? (
         <div className="loading-state"><div className="spinner" /></div>
       ) : models.length === 0 ? (
-        <div className="admin-card empty">
-          <div className="empty__icon">🔄</div>
+        <Card className="empty">
+          <RefreshCw className="empty__icon mx-auto block size-12" strokeWidth={1.5} aria-hidden="true" />
           <div className="empty__title">No hay modelos cargados</div>
           <p>Cargá modelos para que la calculadora del storefront los muestre.</p>
-        </div>
+        </Card>
       ) : (
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Modelo</th>
-                <th>Capacidad</th>
-                <th>Excelente</th>
-                <th>Bueno</th>
-                <th>Con daños</th>
+                <SortableHeader label="Modelo" sortKey="model" sort={sort} onSort={setSort} />
+                <SortableHeader label="Capacidad" sortKey="capacity" sort={sort} onSort={setSort} />
+                <SortableHeader label="Excelente" sortKey="price_excellent" sort={sort} onSort={setSort} align="right" />
+                <SortableHeader label="Bueno" sortKey="price_good" sort={sort} onSort={setSort} align="right" />
+                <SortableHeader label="Con daños" sortKey="price_damaged" sort={sort} onSort={setSort} align="right" />
                 <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {models.map((m) => (
+              {visible.map((m) => (
                 <tr key={m.id}>
                   <td><strong>{m.model || m.device_model}</strong></td>
                   <td>{m.capacity || '—'}</td>
@@ -121,9 +148,9 @@ export default function TradeInConfig() {
                   </td>
                   <td>
                     <div className="table__actions">
-                      <button className="btn btn--sm btn--ghost" onClick={() => setEditing({ ...EMPTY, ...m })}>Editar</button>
-                      <button className="btn btn--sm btn--ghost" onClick={() => toggleActive(m)}>{m.is_active ? 'Ocultar' : 'Mostrar'}</button>
-                      <button className="btn btn--sm btn--ghost" onClick={() => remove(m)} style={{ color: 'var(--accent-red)' }}>Borrar</button>
+                      <Button variant="ghost" size="sm" onClick={() => setEditing({ ...EMPTY, ...m })}><Pencil data-icon="inline-start" /> Editar</Button>
+                      <Button variant="ghost" size="sm" onClick={() => toggleActive(m)}>{m.is_active ? 'Ocultar' : 'Mostrar'}</Button>
+                      <Button variant="destructive" size="sm" onClick={() => remove(m)}><Trash2 data-icon="inline-start" /> Borrar</Button>
                     </div>
                   </td>
                 </tr>
@@ -140,10 +167,10 @@ export default function TradeInConfig() {
         title={editing?.id ? 'Editar modelo' : 'Nuevo modelo de canje'}
         footer={
           <>
-            <button className="btn btn--ghost" onClick={() => setEditing(null)}>Cancelar</button>
-            <button form="ti-form" type="submit" className="btn btn--primary" disabled={saving}>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button form="ti-form" type="submit" disabled={saving}>
               {saving ? 'Guardando…' : 'Guardar'}
-            </button>
+            </Button>
           </>
         }
       >
@@ -151,10 +178,11 @@ export default function TradeInConfig() {
           <form id="ti-form" onSubmit={save}>
             <Disclosure title="Carga rápida (Tipo · Modelo · Capacidad)" defaultOpen>
               <TaxonomyPicker
+                fixedType="iPhone"
                 value={{
-                  type: editing.type_name || 'iPhone',
-                  model: editing.model,
-                  capacity: editing.capacity,
+                  type: 'iPhone',
+                  model: editing.model || '',
+                  capacity: editing.capacity || '',
                 }}
                 onChange={handleTax}
                 showDescription={false}
@@ -201,7 +229,7 @@ function Disclosure({ title, children, defaultOpen = false }) {
     <div className={`disclosure ${open ? 'is-open' : ''}`}>
       <button type="button" className="disclosure__head" onClick={() => setOpen(!open)}>
         <span>{title}</span>
-        <span className="disclosure__caret">▾</span>
+        <ChevronDown className="disclosure__caret size-4" aria-hidden="true" />
       </button>
       <div className="disclosure__body">{children}</div>
     </div>

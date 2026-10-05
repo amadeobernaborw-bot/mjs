@@ -13,7 +13,8 @@ export function useScrollObserver(selector = '.fade-in, .scale-in', deps = []) {
           }
         });
       },
-      { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+      // Sin margen inferior: con el scroll guiado no hay "un poco más de scroll" para revelar el pie de cada pantalla
+      { threshold: 0.12 }
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();

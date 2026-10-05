@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
+import { Save } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { supabase, TABLES, BUCKETS } from '../../lib/supabase';
 
 export default function Profile() {
   const [form, setForm] = useState({
     id: null,
-    store_name: 'MJ STORE',
+    store_name: 'Tu Tienda',
     logo_url: '',
-    whatsapp: '+5492994565758',
+    whatsapp: '',
     instagram_url: '',
     facebook_url: '',
     google_maps_url: '',
     address: '',
     exchange_rate_ars_per_usd: '',
+    terms_and_conditions: '',
+    warranty_text: '',
+    quote_validity_days: 7,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,6 +74,9 @@ export default function Profile() {
       exchange_rate_ars_per_usd: form.exchange_rate_ars_per_usd
         ? Number(form.exchange_rate_ars_per_usd)
         : null,
+      terms_and_conditions: form.terms_and_conditions || null,
+      warranty_text: form.warranty_text || null,
+      quote_validity_days: form.quote_validity_days ? Number(form.quote_validity_days) : 7,
       updated_at: new Date().toISOString(),
     };
     let resp;
@@ -98,7 +107,9 @@ export default function Profile() {
         </div>
       </div>
 
-      <form className="admin-card" onSubmit={handleSubmit}>
+      <Card>
+      <CardContent>
+      <form onSubmit={handleSubmit}>
         <div className="form-grid">
           <div className="field field--full">
             <label className="field__label">Logo</label>
@@ -122,17 +133,17 @@ export default function Profile() {
 
           <div className="field">
             <label className="field__label">WhatsApp (con +54)</label>
-            <input className="input" value={form.whatsapp || ''} onChange={(e) => set('whatsapp', e.target.value)} placeholder="+5492994565758" required />
+            <input className="input" value={form.whatsapp || ''} onChange={(e) => set('whatsapp', e.target.value)} placeholder="+54 9 11 0000 0000" required />
           </div>
 
           <div className="field">
             <label className="field__label">Instagram URL</label>
-            <input className="input" value={form.instagram_url || ''} onChange={(e) => set('instagram_url', e.target.value)} placeholder="https://instagram.com/mjstore" />
+            <input className="input" value={form.instagram_url || ''} onChange={(e) => set('instagram_url', e.target.value)} placeholder="https://instagram.com/tutienda" />
           </div>
 
           <div className="field">
             <label className="field__label">Facebook URL</label>
-            <input className="input" value={form.facebook_url || ''} onChange={(e) => set('facebook_url', e.target.value)} placeholder="https://facebook.com/mjstore" />
+            <input className="input" value={form.facebook_url || ''} onChange={(e) => set('facebook_url', e.target.value)} placeholder="https://facebook.com/tutienda" />
           </div>
 
           <div className="field field--full">
@@ -143,7 +154,7 @@ export default function Profile() {
 
           <div className="field field--full">
             <label className="field__label">Dirección del local</label>
-            <input className="input" value={form.address || ''} onChange={(e) => set('address', e.target.value)} placeholder="Av. Argentina 123, Neuquén" />
+            <input className="input" value={form.address || ''} onChange={(e) => set('address', e.target.value)} placeholder="Calle Falsa 123, Ciudad" />
           </div>
 
           <div className="field">
@@ -158,20 +169,59 @@ export default function Profile() {
             />
             <p className="field__hint">Se usa para calcular precios y facturas en ambas monedas.</p>
           </div>
+
+          <div className="field">
+            <label className="field__label">Validez de presupuestos (días)</label>
+            <input
+              type="number"
+              className="input"
+              min="1"
+              max="365"
+              value={form.quote_validity_days || ''}
+              onChange={(e) => set('quote_validity_days', e.target.value)}
+              placeholder="7"
+            />
+            <p className="field__hint">Cantidad de días que tu presupuesto se mantiene válido.</p>
+          </div>
+
+          <div className="field field--full">
+            <label className="field__label">Texto de garantía</label>
+            <input
+              className="input"
+              value={form.warranty_text || ''}
+              onChange={(e) => set('warranty_text', e.target.value)}
+              placeholder="Garantía oficial de 12 meses por defectos de fábrica."
+            />
+            <p className="field__hint">Se imprime en cada factura y presupuesto.</p>
+          </div>
+
+          <div className="field field--full">
+            <label className="field__label">Términos y condiciones</label>
+            <textarea
+              className="textarea"
+              rows={6}
+              value={form.terms_and_conditions || ''}
+              onChange={(e) => set('terms_and_conditions', e.target.value)}
+              placeholder={"Una condición por línea. Ejemplo:\nCambios y devoluciones dentro de las 48hs.\nAccesorios no admiten devolución.\nLos precios pueden actualizarse según cotización USD."}
+            />
+            <p className="field__hint">Cada renglón se convierte en un ítem del documento.</p>
+          </div>
         </div>
 
         {msg && (
-          <p style={{ marginTop: 16, color: msg.type === 'error' ? 'var(--accent-red)' : 'var(--accent-green)' }}>
+          <p style={{ marginTop: 16, color: msg.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
             {msg.text}
           </p>
         )}
 
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
-          <button type="submit" className="btn btn--primary btn--lg" disabled={saving || uploading}>
-            {saving ? 'Guardando…' : 'Guardar cambios'}
-          </button>
+          <Button type="submit" size="lg" disabled={saving || uploading}>
+            {saving ? 'Guardando…' : <><Save data-icon="inline-start" /> Guardar cambios</>}
+          </Button>
         </div>
       </form>
+      </CardContent>
+      </Card>
     </>
   );
 }

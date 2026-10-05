@@ -9,6 +9,7 @@ import TradeInConfig from './pages/admin/TradeInConfig';
 import Clients from './pages/admin/Clients';
 import Invoices from './pages/admin/Invoices';
 import CashMovements from './pages/admin/CashMovements';
+import Appearance from './pages/admin/Appearance';
 import ProtectedRoute from './router/ProtectedRoute';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="appearance" element={<Appearance />} />
         <Route path="inventory" element={<Inventory />} />
         <Route path="trade-in" element={<TradeInConfig />} />
         <Route path="cash" element={<CashMovements />} />

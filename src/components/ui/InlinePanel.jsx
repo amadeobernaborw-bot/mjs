@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function InlinePanel({ open, onClose, title, children, footer, wide = false }) {
   useEffect(() => {
@@ -16,7 +18,7 @@ export default function InlinePanel({ open, onClose, title, children, footer, wi
       <div className="inline-panel__inner">
         <div className="inline-panel__header">
           <h2 className="inline-panel__title">{title}</h2>
-          <button type="button" className="inline-panel__close" onClick={onClose} aria-label="Cerrar">×</button>
+          <Button type="button" variant="ghost" size="icon-sm" className="rounded-full" onClick={onClose} aria-label="Cerrar"><X /></Button>
         </div>
         <div className="inline-panel__body">{children}</div>
         {footer && <div className="inline-panel__footer">{footer}</div>}

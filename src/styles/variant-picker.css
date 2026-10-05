@@ -1,0 +1,50 @@
+/* =====================================================================
+   Tienda: tarjeta de modelo + selector de variante (modal)
+   Solo tokens semánticos de design-system.css
+   ===================================================================== */
+
+.pcard__options { font-size: 12px; color: var(--text-secondary); letter-spacing: 0.01em; }
+.pcard__price .pcard__from { display: inline; font-size: 12px; color: var(--text-tertiary); margin-right: 4px; }
+
+.vpicker { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 24px; align-items: start; }
+
+.vpicker__media {
+  aspect-ratio: 1 / 1; max-width: 100%;
+  border-radius: var(--radius-lg); overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-sunken);
+}
+.vpicker__media img { width: 100%; height: 100%; object-fit: contain; transition: opacity var(--duration-base) var(--ease-out); }
+
+.vpicker__info { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.vpicker__desc { font-size: 14px; line-height: 1.45; color: var(--text-secondary); }
+
+.vpicker__group { border: 0; margin: 0; padding: 0; }
+.vpicker__label { font-size: var(--text-eyebrow); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 8px; }
+.vpicker__options { display: flex; flex-wrap: wrap; gap: 8px; }
+.vpicker__option {
+  min-height: 40px; padding: 8px 16px; border-radius: var(--radius-md);
+  border: 1px solid var(--border-medium); background: transparent;
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  transition: border-color var(--duration-fast), background-color var(--duration-fast), color var(--duration-fast);
+}
+.vpicker__option:hover { border-color: var(--accent); }
+.vpicker__option:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.vpicker__option[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-tint); color: var(--accent); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent); }
+/* Existe en el modelo pero no con lo elegido: se puede tocar y salta a esa combinación */
+.vpicker__option[data-unavailable='true'] { color: var(--text-tertiary); border-style: dashed; }
+
+.vpicker__summary { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+.vpicker__price strong { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); }
+.vpicker__price span { display: block; font-size: 13px; color: var(--text-tertiary); }
+.vpicker__facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.vpicker__facts li { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--accent-tint); color: var(--text-secondary); }
+.vpicker__facts li[data-tone='ok'] { background: var(--success-tint); color: var(--success); }
+.vpicker__facts li[data-tone='warn'] { background: var(--warning-tint); color: var(--warning); }
+.vpicker__notes { font-size: 13px; color: var(--text-secondary); }
+
+@media (max-width: 600px) {
+  .vpicker { grid-template-columns: 1fr; gap: 16px; }
+  .vpicker__media { max-height: 32svh; aspect-ratio: auto; }
+  .vpicker__media img { max-height: 32svh; }
+}

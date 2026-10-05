@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 export default function Footer({ profile }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="footer">
+    // Va dentro de <main> (última pantalla del scroll guiado): role explícito para conservar el landmark
+    <footer className="footer surface-dark" role="contentinfo">
       <div className="container">
         <div className="footer__cols">
           <div className="footer__col">
@@ -11,7 +12,7 @@ export default function Footer({ profile }) {
             <ul>
               <li><a href="#productos">Productos</a></li>
               <li><a href="#canje">Plan Canje</a></li>
-              <li><a href="#servicios">Por qué MJ</a></li>
+              <li><a href="#servicios">Por qué nosotros</a></li>
             </ul>
           </div>
           <div className="footer__col">
@@ -32,15 +33,17 @@ export default function Footer({ profile }) {
           <div className="footer__col">
             <h4>Acerca de</h4>
             <ul>
-              <li>{profile?.store_name || 'MJ STORE'}</li>
+              <li>{profile?.store_name || 'Tu Tienda'}</li>
               <li>Apple Premium Reseller</li>
               <li><Link to="/admin">Admin</Link></li>
             </ul>
           </div>
         </div>
         <div className="footer__bottom">
-          <span>Copyright © {year} {profile?.store_name || 'MJ STORE'}. Todos los derechos reservados.</span>
+          <span>Copyright © {year} {profile?.store_name || 'Tu Tienda'}. Todos los derechos reservados.</span>
           <span>Apple, iPhone, iPad, Mac y AirPods son marcas registradas de Apple Inc.</span>
+          {/* Visible solo en el footer compacto, donde se ocultan las columnas */}
+          <Link to="/admin" className="footer__admin">Admin</Link>
         </div>
       </div>
     </footer>

@@ -1,52 +1,75 @@
+/* ==========================================================================
+   MJ STORE — Sistema de diseño con dos temas
+   - Oscuro Bordó  (data-theme="dark", por defecto): negro + bordó + glass con glow
+   - Claro Acero   (data-theme="light"): gris muy claro + azul grisáceo
+   Único archivo donde se escriben colores literales (hex/rgba).
+   Los componentes usan SOLO los tokens semánticos (--surface-*, --text-*,
+   --accent*, --cta-*, --glass-*, --border-*, estados y --chart-*).
+   ========================================================================== */
+
 :root {
-  /* MJ Brand — iPhone 17 Pro palette (Orange · Midnight · Titanium) */
-  --brand-violet:      #E8782A;
-  --brand-violet-soft: #F4A874;
-  --brand-pink:        #2A3B5C;
-  --brand-pink-soft:   #B0B0B4;
-  --brand-grad:        linear-gradient(135deg, #E8782A 0%, #D46820 100%);
-  --brand-grad-soft:   linear-gradient(135deg, rgba(232,120,42,0.18), rgba(42,59,92,0.10));
+  /* ---------- Paleta base (primitivos) ---------- */
+  /* Bordó — de la paleta de marca y de la foto del iPhone */
+  --black:        #000000;
+  --night-900:    #0E0809;
+  --night-850:    #0A0607;
+  --night-800:    #140B0D;
+  --night-700:    #261619;
+  --night-600:    #331E21;
+  --wine:         #4F2F36;   /* Bordó oscuro */
+  --wine-medium:  #5A373E;   /* Bordó medio */
+  --wine-bright:  #6A4249;
+  --wine-glow:    #7A4D56;
+  --wine-light:   #8D5D66;   /* Bordó claro */
+  --rose:         #B5848D;   /* Brillo del borde del teléfono */
 
-  /* Backgrounds */
-  --bg-primary:     #FFFFFF;
-  --bg-secondary:   #F5F5F7;
-  --bg-tertiary:    #FAFAFA;
-  --bg-dark:        #0B0B10;
-  --bg-dark-card:   #16161D;
-  --bg-dark-card-2: #1F1F29;
+  /* Plata / acero / carbón */
+  --ink:          #252426;   /* Carbón */
+  --ink-deep:     #1B1A1C;
+  --ink-raised:   #2F2E31;
+  --ink-hover:    #3A393C;
+  --silver:       #DFE0DF;   /* Blanco plata */
+  --silver-light: #F4F4F3;
+  --mist:         #EBECED;   /* Gris muy claro */
+  --cloud:        #F7F8F9;
+  --snow:         #FBFBFC;
+  --cool-subtle:  #E2E5E9;
+  --steel-light:  #C6D0DE;
+  --steel:        #B7C3D5;   /* Azul grisáceo */
+  --steel-medium: #AAB6C8;   /* Azul gris medio */
+  --steel-mid:    #9AA2AF;
+  --steel-deep:   #4A5870;   /* Acero legible sobre claro */
 
-  --text-primary:   #1D1D1F;
-  --text-secondary: #6E6E73;
-  --text-tertiary:  #86868B;
-  --text-on-dark:   #F5F5F7;
-  --text-muted-dark: #A1A1A6;
+  /* Grises de texto por tema (contraste verificado ≥4.5:1) */
+  --warm-gray-2:  #A89A9C;
+  --warm-gray-3:  #8C7F81;
+  --cool-gray-2:  #4E535D;
+  --cool-gray-3:  #5C626C;
+  --cool-gray-4:  #858B95;
 
-  --accent-blue:       #E8782A;
-  --accent-blue-hover: #D46820;
-  --accent-green:      #2FD058;
-  --accent-red:        #FF3B30;
-  --accent-yellow:     #FFCC00;
+  /* Estados en dos versiones: para fondo oscuro y para fondo claro */
+  --success-on-dark: #5FB98A;
+  --danger-on-dark:  #E5837A;
+  --warning-on-dark: #D9A441;
+  --success-on-light: #2E6B47;
+  --danger-on-light:  #A3302A;
+  --warning-on-light: #85580F;
+  --chart-steel-mid:  #7F8DA3;
 
-  /* iPhone 17 Pro Palette */
-  --accent-orange:        #E8782A;
-  --accent-orange-hover:  #D46820;
-  --accent-orange-light:  rgba(232, 120, 42, 0.12);
-  --bg-midnight:          #2A3B5C;
-  --bg-midnight-card:     #1E2D4A;
-  --bg-midnight-hover:    #324568;
-  --titanium:             #B0B0B4;
-  --titanium-light:       #D8D8DC;
+  --whatsapp:     #25D366;   /* Verde de marca de WhatsApp: siempre con texto carbón */
+  --facebook:     #0866FF;   /* Azul de marca de Facebook: texto blanco (4.8:1) */
+  --brand-on-color: #FFFFFF; /* Texto/ícono sobre Facebook e Instagram */
+  --instagram-gradient: linear-gradient(45deg, #405DE6, #5B51DB, #B33AB4, #C135B4, #E1306C, #FD1F1F);
 
-  --border-light:  rgba(0, 0, 0, 0.08);
-  --border-medium: rgba(0, 0, 0, 0.14);
-  --border-dark:   rgba(255, 255, 255, 0.12);
+  /* Papel de facturas/presupuestos (PDF/PNG): siempre claro y con colores planos.
+     Sin color-mix(): html2canvas no lo soporta y rompe la exportación. */
+  --paper:           #FFFFFF;
+  --paper-subtle:    #F7F7F6;
+  --paper-line:      #E1E4E9;
+  --paper-line-soft: #EDEFF2;
+  --paper-muted:     #C3C9D2;
 
-  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-hover:  0 14px 40px rgba(0, 0, 0, 0.12);
-  --shadow-modal:  0 20px 60px rgba(0, 0, 0, 0.25);
-  --shadow-inset:  inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --shadow-brand:  0 18px 50px rgba(232, 120, 42, 0.30);
-
+  /* ---------- Tipografía, espacio, radios, motion (comunes a ambos temas) ---------- */
   --text-hero:        clamp(48px, 7vw, 80px);
   --text-section:     clamp(36px, 5vw, 56px);
   --text-subsection:  clamp(24px, 3vw, 34px);
@@ -74,20 +97,311 @@
 
   --container-max: 1240px;
   --nav-height: 56px;
+  /* Alto de cada pantalla del scroll guiado (landing). svh = alto con la barra del navegador visible */
+  --slide-h: calc(100vh - var(--nav-height));
+  --slide-h: calc(100svh - var(--nav-height));
+  --glass-blur: 18px;
 }
 
+/* ==========================================================================
+   TEMA CLARO ACERO
+   Los temas se aplican a cualquier elemento con data-theme (no solo <html>),
+   así Apariencia puede mostrar vistas previas del otro tema.
+   ========================================================================== */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-page:    var(--mist);
+  --surface-alt:     var(--silver);
+  --surface-card:    var(--cloud);
+  --surface-subtle:  var(--cool-subtle);
+  --surface-sunken:  var(--silver);
+  --surface-input:   var(--snow);
+  --surface-raised:  var(--snow);
+  --surface-sidebar: var(--cloud);
+
+  --text-primary:   var(--ink);
+  --text-secondary: var(--cool-gray-2);
+  --text-tertiary:  var(--cool-gray-3);
+
+  --accent:      var(--steel-deep);
+  --accent-tint: rgba(74, 88, 112, 0.10);
+  --accent-glow: rgba(183, 195, 213, 0.75);
+
+  --border-light:  rgba(37, 36, 38, 0.10);
+  --border-medium: rgba(37, 36, 38, 0.18);
+  --border-input:  var(--cool-gray-4);
+  --focus-ring:    var(--steel-deep);
+
+  /* CTA: azul grisáceo metálico con texto carbón */
+  --cta-bg:       linear-gradient(135deg, var(--steel-light) 0%, var(--steel) 50%, var(--steel-medium) 100%);
+  --cta-bg-hover: linear-gradient(135deg, var(--steel) 0%, var(--steel-medium) 100%);
+  --cta-text:     var(--ink);
+  --cta-border:   rgba(74, 88, 112, 0.40);
+  --cta-ring:     rgba(74, 88, 112, 0.22);
+
+  --success:      var(--success-on-light);
+  --success-tint: rgba(46, 107, 71, 0.12);
+  --danger:       var(--danger-on-light);
+  --danger-tint:  rgba(163, 48, 42, 0.10);
+  --warning:      var(--warning-on-light);
+  --warning-tint: rgba(133, 88, 15, 0.12);
+
+  --glass-bg:     linear-gradient(160deg, rgba(255, 255, 255, 0.88) 0%, rgba(247, 248, 249, 0.66) 100%);
+  --glass-border: rgba(74, 88, 112, 0.14);
+  --glass-rim:    rgba(255, 255, 255, 0.95);
+  --glass-shadow:       inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 18px 40px -22px rgba(37, 36, 38, 0.28), 0 0 32px -12px rgba(183, 195, 213, 0.75);
+  --glass-shadow-hover: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 24px 52px -22px rgba(37, 36, 38, 0.32), 0 0 44px -8px rgba(170, 182, 200, 0.95);
+
+  --ambient-1: rgba(183, 195, 213, 0.70);
+  --ambient-2: rgba(141, 93, 102, 0.08);
+
+  --nav-glass: rgba(247, 248, 249, 0.78);
+  --menu-bg:   rgba(247, 248, 249, 0.97);
+
+  --shadow-card:  0 1px 2px rgba(37, 36, 38, 0.04), 0 6px 24px rgba(37, 36, 38, 0.06);
+  --shadow-hover: 0 2px 6px rgba(37, 36, 38, 0.06), 0 18px 44px rgba(37, 36, 38, 0.14);
+  --shadow-modal: 0 24px 64px rgba(27, 26, 28, 0.28);
+  --shadow-brand: 0 12px 30px -10px rgba(74, 88, 112, 0.45);
+
+  --chart-1: var(--steel-deep);
+  --chart-2: var(--ink);
+  --chart-3: var(--wine-light);
+  --chart-4: var(--warning-on-light);
+  --chart-5: var(--success-on-light);
+  --chart-6: var(--danger-on-light);
+  --chart-7: var(--chart-steel-mid);
+  --chart-8: var(--wine-medium);
+}
+
+/* Zona siempre oscura dentro del tema claro (Hero cinematográfico y footer):
+   carbón con acentos azul grisáceo. En el tema oscuro no cambia nada. */
+[data-theme="light"] .surface-dark,
+[data-theme="light"].surface-dark {
+  color-scheme: dark;
+
+  --surface-page:   var(--ink);
+  --surface-alt:    var(--ink-deep);
+  --surface-card:   var(--ink-raised);
+  --surface-subtle: var(--ink-hover);
+  --surface-sunken: var(--ink-deep);
+
+  --text-primary:   var(--silver);
+  --text-secondary: var(--steel);
+  --text-tertiary:  var(--steel-mid);
+
+  --accent:      var(--steel);
+  --accent-tint: rgba(183, 195, 213, 0.12);
+
+  --border-light:  rgba(223, 224, 223, 0.10);
+  --border-medium: rgba(223, 224, 223, 0.20);
+  --focus-ring:    var(--steel);
+
+  --cta-border: rgba(183, 195, 213, 0.6);
+  --cta-ring:   rgba(183, 195, 213, 0.30);
+
+  --nav-glass: rgba(27, 26, 28, 0.84);
+  --menu-bg:   rgba(27, 26, 28, 0.97);
+
+  --hero-veil-rgb: 27 26 28;
+  --hero-glow:     rgba(74, 88, 112, 0.55);
+  --hero-glow-2:   rgba(183, 195, 213, 0.16);
+  --headline-grad: linear-gradient(180deg, var(--silver-light) 0%, var(--silver) 55%, var(--steel) 100%);
+  --headline-em:   linear-gradient(100deg, var(--steel) 0%, var(--silver) 50%, var(--steel-medium) 100%);
+
+  --shadow-card: 0 18px 40px -20px rgba(0, 0, 0, 0.6);
+}
+/* ==========================================================================
+   TEMA OSCURO BORDÓ (por defecto)
+   Va después del tema claro a propósito: una vista previa oscura
+   ([data-theme="dark"].surface-dark) dentro de un admin claro tiene que
+   ganarle a "[data-theme=light] .surface-dark" (misma especificidad).
+   ========================================================================== */
+:root:not([data-theme="light"]),
+[data-theme="dark"],
+[data-theme="dark"].surface-dark {
+  color-scheme: dark;
+
+  --surface-page:    var(--black);
+  --surface-alt:     #080506;
+  --surface-card:    var(--night-800);
+  --surface-subtle:  var(--night-700);
+  --surface-sunken:  var(--night-850);
+  --surface-input:   var(--night-900);
+  --surface-raised:  var(--night-600);
+  --surface-sidebar: var(--night-850);
+
+  --text-primary:   var(--silver);
+  --text-secondary: var(--warm-gray-2);
+  --text-tertiary:  var(--warm-gray-3);
+
+  --accent:      var(--rose);
+  --accent-tint: rgba(181, 132, 141, 0.12);
+  --accent-glow: rgba(141, 93, 102, 0.45);
+
+  --border-light:  rgba(181, 132, 141, 0.14);
+  --border-medium: rgba(181, 132, 141, 0.26);
+  --border-input:  var(--wine-light);
+  --focus-ring:    var(--rose);
+
+  /* CTA: bordó metálico como el cuerpo del teléfono, con canto rosado */
+  --cta-bg:       linear-gradient(135deg, var(--wine-bright) 0%, var(--wine-medium) 48%, var(--wine) 100%);
+  --cta-bg-hover: linear-gradient(135deg, var(--wine-glow) 0%, var(--wine-bright) 50%, var(--wine-medium) 100%);
+  --cta-text:     var(--silver-light);
+  --cta-border:   rgba(181, 132, 141, 0.45);
+  --cta-ring:     rgba(141, 93, 102, 0.40);
+
+  --success:      var(--success-on-dark);
+  --success-tint: rgba(95, 185, 138, 0.14);
+  --danger:       var(--danger-on-dark);
+  --danger-tint:  rgba(229, 131, 122, 0.14);
+  --warning:      var(--warning-on-dark);
+  --warning-tint: rgba(217, 164, 65, 0.14);
+
+  /* Glass con glow sutil */
+  --glass-bg:     linear-gradient(160deg, rgba(141, 93, 102, 0.16) 0%, rgba(20, 11, 13, 0.62) 42%, rgba(14, 8, 9, 0.74) 100%);
+  --glass-border: rgba(181, 132, 141, 0.18);
+  --glass-rim:    rgba(223, 224, 223, 0.24);
+  --glass-shadow:       inset 0 1px 0 rgba(223, 224, 223, 0.05), 0 24px 48px -24px rgba(0, 0, 0, 0.9), 0 0 36px -14px rgba(141, 93, 102, 0.32);
+  --glass-shadow-hover: inset 0 1px 0 rgba(223, 224, 223, 0.08), 0 28px 56px -24px rgba(0, 0, 0, 0.9), 0 0 52px -10px rgba(141, 93, 102, 0.50);
+
+  /* Luces difusas de fondo (para que el vidrio tenga algo que difuminar) */
+  --ambient-1: rgba(90, 55, 62, 0.55);
+  --ambient-2: rgba(141, 93, 102, 0.20);
+
+  --nav-glass: rgba(0, 0, 0, 0.72);
+  --menu-bg:   rgba(0, 0, 0, 0.96);
+
+  --shadow-card:  0 18px 40px -20px rgba(0, 0, 0, 0.9);
+  --shadow-hover: 0 28px 60px -24px rgba(0, 0, 0, 0.95), 0 0 40px -12px rgba(141, 93, 102, 0.40);
+  --shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(181, 132, 141, 0.16);
+  --shadow-brand: 0 12px 32px -8px rgba(141, 93, 102, 0.55);
+
+  /* Hero (siempre oscuro) */
+  --hero-veil-rgb: 0 0 0;
+  --hero-glow:     rgba(90, 55, 62, 0.65);
+  --hero-glow-2:   rgba(141, 93, 102, 0.22);
+  --headline-grad: linear-gradient(180deg, var(--silver-light) 0%, var(--silver) 55%, var(--warm-gray-2) 100%);
+  --headline-em:   linear-gradient(100deg, var(--rose) 0%, var(--silver) 50%, var(--wine-light) 100%);
+
+  /* Serie categórica de gráficos (≥3:1 contra la tarjeta) */
+  --chart-1: var(--rose);
+  --chart-2: var(--silver);
+  --chart-3: var(--wine-light);
+  --chart-4: var(--warning-on-dark);
+  --chart-5: var(--success-on-dark);
+  --chart-6: var(--danger-on-dark);
+  --chart-7: var(--warm-gray-2);
+  --chart-8: var(--steel);
+}
+
+.surface-dark { background: var(--surface-page); color: var(--text-primary); }
+
+/* Papel de factura: siempre claro, sin importar el tema */
+.invoice-doc {
+  color-scheme: light;
+  --text-primary:   var(--ink);
+  --text-secondary: #5A585C;
+  --text-tertiary:  #636165;
+  --success:        var(--success-on-light);
+  --success-tint:   rgba(46, 107, 71, 0.12);
+  --danger:         var(--danger-on-light);
+  --danger-tint:    rgba(163, 48, 42, 0.10);
+  --warning:        var(--warning-on-light);
+  --warning-tint:   rgba(133, 88, 15, 0.12);
+  --border-light:   var(--paper-line);
+}
+
+/* ==========================================================================
+   Utilidades de layout y tipografía
+   ========================================================================== */
 .container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
 .section { padding-block: clamp(72px, 10vw, 128px); }
 .section--tight { padding-block: clamp(48px, 7vw, 80px); }
-.section--dark { background: var(--bg-dark); color: var(--text-on-dark); }
-.section--gray { background: var(--bg-secondary); }
+.section--alt { background: var(--surface-alt); }
 
-.eyebrow { font-size: var(--text-eyebrow); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent-orange); }
+.eyebrow { font-size: var(--text-eyebrow); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
 .headline { font-size: var(--text-hero); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; }
-.title { font-size: var(--text-section); font-weight: 700; letter-spacing: -0.035em; line-height: 1.07; }
+.title { font-size: var(--text-section); font-weight: 700; letter-spacing: -0.035em; line-height: 1.07; color: var(--text-primary); }
 .subtitle { font-size: var(--text-subsection); font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
 .body-lg { font-size: var(--text-body-lg); color: var(--text-secondary); line-height: 1.5; }
 .body { font-size: var(--text-body); color: var(--text-secondary); line-height: 1.5; }
 .center { text-align: center; }
 .muted { color: var(--text-secondary); }
-.muted-light { color: var(--text-muted-dark); }
+
+/* ==========================================================================
+   Glass con glow — una sola definición, reutilizada por tarjetas y paneles.
+   El vidrio va en ::before (un backdrop-filter en el propio elemento lo haría
+   contenedor de los hijos position:fixed, como los modales) y la línea de luz
+   del canto superior va en ::after.
+   ========================================================================== */
+.glass,
+.pcard,
+.bento__cell,
+.tradein__panel,
+.admin-card,
+.stat,
+.dash-quadrant,
+.auth-card {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.glass::before,
+.pcard::before,
+.bento__cell::before,
+.tradein__panel::before,
+.admin-card::before,
+.stat::before,
+.dash-quadrant::before,
+.auth-card::before {
+  content: '';
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+}
+.glass::after,
+.pcard::after,
+.bento__cell::after,
+.tradein__panel::after,
+.admin-card::after,
+.stat::after,
+.dash-quadrant::after,
+.auth-card::after {
+  content: '';
+  position: absolute; top: 0; left: 14%; right: 14%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-rim), transparent);
+  pointer-events: none;
+}
+.glass--interactive,
+.pcard,
+.bento__cell {
+  transition: box-shadow var(--duration-base) var(--ease-out), border-color var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-out);
+}
+.glass--interactive:hover,
+.pcard:hover,
+.bento__cell:hover {
+  box-shadow: var(--glass-shadow-hover);
+  border-color: var(--border-medium);
+}
+
+/* Luz difusa de fondo para secciones con vidrio */
+.ambient {
+  background:
+    radial-gradient(55% 60% at 15% 20%, var(--ambient-1), transparent 70%),
+    radial-gradient(45% 55% at 90% 85%, var(--ambient-2), transparent 70%),
+    var(--surface-page);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass::before, .pcard::before, .bento__cell::before, .tradein__panel::before,
+  .admin-card::before, .stat::before, .dash-quadrant::before, .auth-card::before {
+    background: var(--surface-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

@@ -1,12 +1,44 @@
 <!doctype html>
-<html lang="es">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="MJ STORE — La mejor tecnología Apple, en tu mano. iPhone, Mac, iPad, Watch, AirPods y accesorios." />
-    <title>MJ STORE — Apple Premium Reseller</title>
+    <meta name="description" content="La mejor tecnología Apple, en tu mano. iPhone, Mac, iPad, Watch, AirPods y accesorios." />
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <title>Apple Premium Reseller</title>
+    <script>
+      // Antes del primer pintado: aplica el último tema de la zona (tienda o admin)
+      // y precarga la imagen del Hero de la visita anterior.
+      // Claves compartidas con src/lib/theme.js y src/lib/heroCache.js.
+      (function () {
+        var isAdmin = location.pathname.indexOf('/admin') === 0;
+        var theme = 'dark';
+        function preload(href, media) {
+          if (typeof href !== 'string' || href.indexOf('https://') !== 0) return;
+          var link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = href;
+          link.media = media;
+          link.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(link);
+        }
+        try {
+          var saved = localStorage.getItem('mj-theme-' + (isAdmin ? 'admin' : 'storefront'));
+          if (saved === 'light' || saved === 'dark') theme = saved;
+          if (!isAdmin) {
+            var hero = JSON.parse(localStorage.getItem('mj-hero') || 'null');
+            if (hero && hero.desktop) {
+              preload(hero.desktop, '(min-width: 769px)');
+              preload(hero.mobile || hero.desktop, '(max-width: 768px)');
+            }
+          }
+        } catch (e) {}
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase, TABLES } from '../lib/supabase';
 
 const DEFAULT_PROFILE = {
-  store_name: 'MJ STORE',
+  store_name: 'Tu Tienda',
   logo_url: '',
-  whatsapp: '+5492994565758',
+  whatsapp: '',
   instagram_url: '',
   facebook_url: '',
   google_maps_url: '',
