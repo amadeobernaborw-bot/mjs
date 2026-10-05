@@ -33,7 +33,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 2. Ir a **SQL Editor** y ejecutar `supabase/migrations/001_init.sql` (crea tablas, RLS, policies y storage buckets).
 3. Ir a **Authentication → Users → Add user**:
    - Email: `maripiljerestore@mjstore.com`
-   - Password: `12345678`
+   - Password: la define el administrador en Supabase (no se guarda en el repo)
    - Marcar **Auto Confirm User**.
 4. Copiar `Project URL` y `anon key` (Settings → API) a `.env.local`.
 
@@ -124,7 +124,7 @@ src/
 ## Credenciales de admin
 
 - Email: `maripiljerestore@mjstore.com`
-- Password: `12345678`
+- Password: la define el administrador en Supabase (no se guarda en el repo)
 
 ## Verificación end-to-end
 

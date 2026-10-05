@@ -203,7 +203,7 @@ Plantilla en `.env.example`. **Nunca commitear `.env.local`.**
 ### 5.2 Usuario Administrador
 
 - **Email:** `maripiljerestore@mjstore.com`
-- **Password:** `12345678`
+- **Password:** la define el administrador en Supabase (no se guarda en el repo)
 - Crear manualmente desde **Supabase Dashboard → Authentication → Users → Add user** (marcar "Auto Confirm User" para que pueda loguearse sin verificar email).
 - El email es ficticio y solo sirve como identificador de login interno.
 
