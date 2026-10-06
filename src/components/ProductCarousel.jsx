@@ -69,10 +69,12 @@ export default function ProductCarousel({ models, onOpen }) {
     };
   }, [models, viewMode]);
 
-  // Galería: ocupa el alto que queda en la pantalla del catálogo (snap-scroll.css); el resto, scroll interno
+  // Al cambiar el filtro, el orden o la vista, volver al principio (el primero del orden elegido)
   useEffect(() => {
     const t = trackRef.current;
-    if (t && viewMode === 'grid') t.scrollTop = 0;
+    if (!t) return;
+    t.scrollTop = 0;
+    t.scrollLeft = 0;
   }, [models, viewMode]);
 
   const scrollBy = (dir) => {
@@ -127,12 +129,11 @@ export default function ProductCarousel({ models, onOpen }) {
               <span className="view-toggle__label">Galería</span>
             </button>
           </div>
-          {!isGrid && (
-            <div className="carousel__nav">
-              <Button variant="outline" size="icon-lg" className="rounded-full" onClick={() => scrollBy(-1)} disabled={!canPrev} aria-label="Anterior"><ChevronLeft /></Button>
-              <Button variant="outline" size="icon-lg" className="rounded-full" onClick={() => scrollBy(1)} disabled={!canNext} aria-label="Siguiente"><ChevronRight /></Button>
-            </div>
-          )}
+          {/* En galería se oculta pero conserva su lugar: al cambiar de vista nada se mueve */}
+          <div className="carousel__nav" aria-hidden={isGrid}>
+            <Button variant="outline" size="icon-lg" className="rounded-full" onClick={() => scrollBy(-1)} disabled={isGrid || !canPrev} aria-label="Anterior"><ChevronLeft /></Button>
+            <Button variant="outline" size="icon-lg" className="rounded-full" onClick={() => scrollBy(1)} disabled={isGrid || !canNext} aria-label="Siguiente"><ChevronRight /></Button>
+          </div>
         </div>
       </div>
 

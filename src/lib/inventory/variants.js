@@ -192,6 +192,32 @@ export function storefrontModels(models, variants, order = {}) {
       || compareModels(a, b));
 }
 
+/** Órdenes del catálogo de la tienda; "featured" es el de storefrontModels. */
+export const STORE_SORTS = {
+  featured: 'Destacados',
+  priceAsc: 'Menor precio',
+  priceDesc: 'Mayor precio',
+};
+
+// Precio "desde" en ARS; si el modelo solo tiene USD, convertido con la cotización
+const storePrice = (m, rate) => {
+  if (m.priceFromArs) return m.priceFromArs;
+  if (m.priceFromUsd && rate > 0) return m.priceFromUsd * rate;
+  return null;
+};
+
+/** Ordena modelos de la tienda por precio. Sin precio van al final; los empates conservan el orden recibido. */
+export function sortStoreModels(models, sort, rate) {
+  if (sort !== 'priceAsc' && sort !== 'priceDesc') return models;
+  const dir = sort === 'priceAsc' ? 1 : -1;
+  return [...models].sort((a, b) => {
+    const pa = storePrice(a, rate);
+    const pb = storePrice(b, rate);
+    if (pa == null || pb == null) return compareRank(pa == null, pb == null);
+    return compareRank(pa, pb) * dir;
+  });
+}
+
 /** Foto de una variante: la propia si tiene, si no la del modelo. */
 export const variantImage = (variant, model) => variant?.image_url || model?.image_url || null;
 

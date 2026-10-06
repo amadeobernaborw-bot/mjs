@@ -5,7 +5,7 @@ import { useStoreProfile } from '../hooks/useStoreProfile';
 import { useScrollObserver } from '../hooks/useScrollObserver';
 import { useSnapScroll } from '../hooks/useSnapScroll';
 import { useDocumentTheme, THEME_SCOPES } from '../lib/theme';
-import { CATEGORY_ORDER, storefrontModels } from '../lib/inventory/variants';
+import { CATEGORY_ORDER, sortStoreModels, storefrontModels } from '../lib/inventory/variants';
 import Nav from '../components/Nav';
 import Hero from '../components/Hero';
 import CategoryBar from '../components/CategoryBar';
@@ -29,6 +29,7 @@ export default function Store() {
   const [loadError, setLoadError] = useState(null);
   const [activeCat, setActiveCat] = useState(ALL);
   const [activeLine, setActiveLine] = useState(null);
+  const [sort, setSort] = useState('featured');
   const [picked, setPicked] = useState(null);
 
   useEffect(() => {
@@ -59,8 +60,12 @@ export default function Store() {
     return [...new Set(models.filter((m) => m.type_name === activeCat).map((m) => m.line))];
   }, [models, activeCat]);
 
-  const visible = useMemo(() => models.filter((m) => (activeCat === ALL || m.type_name === activeCat)
-    && (!activeLine || m.line === activeLine)), [models, activeCat, activeLine]);
+  const rate = Number(profile.exchange_rate_ars_per_usd) || 0;
+  const visible = useMemo(() => sortStoreModels(
+    models.filter((m) => (activeCat === ALL || m.type_name === activeCat) && (!activeLine || m.line === activeLine)),
+    sort,
+    rate,
+  ), [models, activeCat, activeLine, sort, rate]);
 
   useEffect(() => { setActiveLine(null); }, [activeCat]);
 
@@ -97,6 +102,8 @@ export default function Store() {
               models={linesForCat}
               activeModel={activeLine}
               onChangeModel={setActiveLine}
+              sort={sort}
+              onSortChange={setSort}
               embedded
             />
             {loadingProducts ? (

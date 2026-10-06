@@ -47,11 +47,55 @@
   }
   .snap-scroll .catbar--embedded { margin-bottom: clamp(12px, 3svh, 36px); }
   .snap-scroll .carousel__head { margin-bottom: clamp(12px, 3svh, 32px); }
-  .snap-scroll .pcard__media { max-height: clamp(96px, 20svh, 260px); }
-  /* Galería: la pantalla tiene alto fijo y la grilla ocupa lo que queda, con scroll interno */
-  .snap-scroll .section--catalog:has(.carousel[data-view="grid"]) { height: var(--slide-h); }
-  .snap-scroll .carousel[data-view="grid"] { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  .snap-scroll .carousel[data-view="grid"] .carousel__track--grid { flex: 1; min-height: 0; }
+  /* La pantalla del catálogo tiene alto fijo (var(--slide-h)) */
+  .snap-scroll .section--catalog { height: var(--slide-h); }
+  /* Alto FIJO de tarjeta: depende solo del alto de la pantalla, no de la vista (carrusel/galería),
+     de la categoría (la fila de modelos que aparece abajo) ni de la cantidad de productos.
+     Calibrado para que entren 2 filas completas aun con la fila de modelos visible. */
+  .snap-scroll .carousel { --pcard-h: clamp(100px, calc(39svh - 119px), 280px); }
+  /* Mismo alto en las dos vistas: 2 filas + gap + padding vertical del track (10px + 12px) */
+  .snap-scroll .carousel__track { height: calc(2 * var(--pcard-h) + var(--carousel-gap) + 22px); }
+  .snap-scroll .carousel__track:not(.carousel__track--grid) { grid-template-rows: repeat(2, var(--pcard-h)); }
+  /* Galería: las filas siguientes quedan abajo, con scroll interno de a fila */
+  .snap-scroll .carousel__track--grid {
+    grid-auto-rows: var(--pcard-h);
+    scroll-snap-type: y mandatory;
+    scroll-padding-top: 10px;
+  }
+  .snap-scroll .carousel__track--grid .carousel__item { scroll-snap-align: start; }
+}
+/* Tablet y celular: el encabezado del catálogo ocupa más alto (título y controles en 2 líneas) */
+@media (min-height: 481px) and (max-width: 1068px) {
+  .snap-scroll .carousel { --pcard-h: clamp(100px, calc(39svh - 119px), 260px); }
+}
+@media (min-height: 481px) and (max-width: 640px) {
+  .snap-scroll .carousel { --pcard-h: clamp(100px, calc(39svh - 134px), 260px); }
+}
+
+/* La tarjeta adapta su contenido a su propio alto fijo (no al de la pantalla).
+   Solo con scroll guiado: la contención de tamaño necesita la fila de alto fijo. */
+@media (min-height: 481px) {
+  .snap-scroll .carousel__item { container: pcard / size; }
+}
+@container pcard (max-height: 215px) {
+  .pcard__desc { display: none; }
+}
+@container pcard (max-height: 185px) {
+  .pcard__options,
+  .pcard__price span:not(.pcard__from) { display: none; }
+}
+@container pcard (max-height: 150px) {
+  .pcard__category { display: none; }
+  .pcard__body { padding: 10px 14px; }
+  .pcard__body > button { margin-top: 6px; }
+}
+@container pcard (max-height: 118px) {
+  .pcard__body { padding-block: 8px; }
+  .pcard__name { font-size: 15px; }
+  .pcard__price { padding-top: 2px; }
+  .pcard__body > button { height: 28px; margin-top: 4px; }
+}
+@media (min-height: 481px) {
 
   /* ---------- Bento ---------- */
   .snap-scroll .bento-section__head { margin-bottom: clamp(16px, 4svh, 48px); }
@@ -91,8 +135,6 @@
   .snap-scroll .hero__chips { display: none; }
   .snap-scroll .hero__sub { margin-bottom: 20px; }
   .snap-scroll .carousel__head .eyebrow { display: none; }
-  .snap-scroll .pcard__desc { display: none; }
-  .snap-scroll .pcard__body { padding: 14px 16px 16px; }
   .snap-scroll .tradein__lead { display: none; }
   .snap-scroll .tradein__amount { font-size: clamp(26px, 5svh, 40px); margin: 4px 0; }
   .snap-scroll .tradein__amount--empty { font-size: 20px; }
@@ -119,7 +161,6 @@
 @media (min-height: 481px) and (max-height: 620px) {
   .snap-scroll .title { font-size: 24px; }
   .snap-scroll .hero__inner { padding-block: 16px; }
-  .snap-scroll .pcard__name { font-size: 16px; }
   .snap-scroll .tradein__panel { padding: 16px; }
   .snap-scroll .condition-chip { min-height: 44px; padding: 10px 8px; }
 }
@@ -186,10 +227,6 @@
   .snap-scroll .section--catalog { padding-block: clamp(14px, 3svh, 40px); }
   .snap-scroll .catbar--embedded { padding: 8px 0; }
   .snap-scroll .carousel__head { gap: 10px; }
-  .snap-scroll .carousel__track { padding-bottom: 10px; }
-  .snap-scroll .pcard__media { max-height: clamp(90px, 16svh, 200px); }
-  .snap-scroll .pcard__price { padding-top: 6px; }
-  .snap-scroll .pcard__options { display: none; }
 }
 
 /* Celular bajo (iPhone SE): tarjetas del Bento aún más compactas */

@@ -7,6 +7,7 @@ import {
   groupInventory,
   matchVariants,
   selectOption,
+  sortStoreModels,
   storefrontModels,
   variantMatrix,
 } from '../variants';
@@ -172,5 +173,36 @@ describe('storefront', () => {
       variant({ id: 'stocked', battery_health: 95, price_ars: 1100, stock: 1 }),
     ];
     expect(matchVariants(twins, { capacity: '128GB' }).map((v) => v.id)).toEqual(['stocked', 'cheap']);
+  });
+});
+
+describe('sortStoreModels', () => {
+  const m = (id, priceFromArs, priceFromUsd = null) => ({ id, priceFromArs, priceFromUsd });
+  const ids = (list) => list.map((x) => x.id);
+  const list = [m('b', 2000), m('none', null), m('a', 1000), m('c', 3000)];
+
+  test('featured keeps the incoming order', () => {
+    expect(sortStoreModels(list, 'featured', 1000)).toBe(list);
+  });
+
+  test('sorts ascending and descending, models without price last', () => {
+    expect(ids(sortStoreModels(list, 'priceAsc', 1000))).toEqual(['a', 'b', 'c', 'none']);
+    expect(ids(sortStoreModels(list, 'priceDesc', 1000))).toEqual(['c', 'b', 'a', 'none']);
+  });
+
+  test('converts USD-only models with the exchange rate', () => {
+    const mixed = [m('ars', 1500), m('usd', null, 2)];
+    expect(ids(sortStoreModels(mixed, 'priceAsc', 1000))).toEqual(['ars', 'usd']);
+    expect(ids(sortStoreModels(mixed, 'priceAsc', 500))).toEqual(['usd', 'ars']);
+  });
+
+  test('USD-only models without a rate count as without price', () => {
+    expect(ids(sortStoreModels([m('usd', null, 2), m('ars', 1500)], 'priceAsc', 0))).toEqual(['ars', 'usd']);
+  });
+
+  test('ties keep the featured order and the input is not mutated', () => {
+    const tied = [m('x', 1000), m('y', 1000), m('z', 500)];
+    expect(ids(sortStoreModels(tied, 'priceAsc', 1000))).toEqual(['z', 'x', 'y']);
+    expect(ids(tied)).toEqual(['x', 'y', 'z']);
   });
 });
